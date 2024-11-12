@@ -33,6 +33,8 @@ Prerequisites:
 
 When the graphics didn't work out of the box (e.g., the window cannot be opened on Mac), I found the recipes [here](https://cs51.io/handouts/setup/) here helpful.
 
+If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you can build and run it with `nix run github:rossberg/boulder-dash?dir=nix`
+
 
 ### Controls
 
