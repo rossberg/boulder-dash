@@ -70,7 +70,7 @@ let deinit () =
 
 let _ = preinit ()  (* has to run before Graphics.make_image *)
 
-let bmp = Bmp.load "sprites.bmp" 1
+let bmp = Bmp.load Filename.(concat (dirname Sys.argv.(0)) "sprites.bmp") 1
 
 let fetch x y w h scale recolor =
   Array.init (h * scale) (fun j -> Array.init (w * scale) (fun i ->
