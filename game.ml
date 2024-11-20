@@ -57,10 +57,16 @@ let input game (cave : Cave.cave) key : bool =
   );
   !step
 
+(* Wait for key press *)
+let rec wait_input () =
+  match fst (Engine.get_key ()) with
+  | '\x00' -> Unix.sleepf 0.05; wait_input ()
+  | key -> key
+
 
 (* Make a simulation turn *)
 let turn game (cave : Cave.cave) =
-  let key, shift = Input.get () in
+  let key, shift = Engine.get_key () in
   cave.rockford.reach <- shift;
   if cave.rockford.presence = Present then
     cave.rockford.face <-
@@ -85,7 +91,7 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  ignore (input game cave (fst (Input.get ())))
+  ignore (input game cave (fst (Engine.get_key ())))
 
 
 (* Render an animation frame *)
@@ -212,6 +218,6 @@ let rec play () =
   else
     Render.print White (6, 12) "GAME OVER";
   Render.finish ();
-  if Input.wait () = '\x1b' then exit 0;
+  if wait_input () = '\x1b' then exit 0;
 
   play ()
