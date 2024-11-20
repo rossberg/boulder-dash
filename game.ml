@@ -104,6 +104,7 @@ let reveal game cave n revealed =
 (* Render an animation frame *)
 let render game cave frame revealed =
   incr frame;
+  Render.prepare ();
 
   (* Map *)
   Render.scroll cave.Cave.rockford.pos;
@@ -185,13 +186,12 @@ let play_cave game cave =
 
     (* Check if it's time for drawing an animation frame *)
     frame_lag := !frame_lag +. lag;
-    if !frame_lag >= frame_time then
+    if cave.diamonds >= cave.needed && old_diamonds < cave.needed then
+      Render.flash ()
+    else if !frame_lag >= frame_time then
     (
       frame_lag := !frame_lag -. frame_time;
-      if cave.diamonds >= cave.needed && old_diamonds < cave.needed then
-        Render.flash ()
-      else
-        render game cave frame revealed
+      render game cave frame revealed
     );
 
     let pause = min (turn_time -. !turn_lag) (frame_time -. !frame_lag) in
