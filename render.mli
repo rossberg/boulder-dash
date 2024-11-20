@@ -17,6 +17,12 @@ val reset : grid_pos -> float -> unit
 (** [reset (w, h) fpt] resets the window state to a new cave size and refresh
    rate [fpt], denoting how many animation frames fit into one game turn. *)
 
+val rescale : int -> unit
+(** [rescale n] changes the scaling factor by [n]. *)
+
+val fullscreen : unit -> unit
+(** Toggle fullscreen mode, if available. *)
+
 val scroll : grid_pos -> unit
 (** If the given grid position is too close to the window borders, initiates
    scrolling to a position where it is centered. Can be reinvoked to update

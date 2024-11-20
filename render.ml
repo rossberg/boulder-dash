@@ -2,6 +2,10 @@
 
 type grid_pos = int * int
 
+let black = Raylib.Color.black
+let white = Raylib.Color.white
+let yellow = Raylib.Color.create 0xbf 0xcd 0x7a 0xff
+
 let sprite_size = 16  (* size of sprite in graphics file *)
 let letter_w = sprite_size  (* size of letter sprite *)
 let letter_h = sprite_size/2
@@ -28,6 +32,23 @@ let info_w () = 20 * char_w ()
 let info_h () = 2 * char_h ()
 
 
+(* Dimensions *)
+
+let window_width () =
+  (* Screen width is off when in fullscreen mode *)
+  if Raylib.is_window_fullscreen () then
+    Raylib.(get_monitor_width (get_current_monitor ()))
+  else
+    Raylib.get_screen_width ()
+
+let window_height () =
+  (* Screen width is off when in fullscreen mode *)
+  if Raylib.is_window_fullscreen () then
+    Raylib.(get_monitor_height (get_current_monitor ()))
+  else
+    Raylib.get_screen_height ()
+
+
 (* Initialisation *)
 
 let _ = Arg.parse
@@ -37,71 +58,62 @@ let _ = Arg.parse
 
 let clear () =
   dirty := true;  (* invalidate all screen *)
-  Graphics.fill_rect (-1) (-1) (Graphics.size_x () + 2) (Graphics.size_y () + 2)
+  Raylib.clear_background black
 
 let reset (w, h) fpt =
   width := w; height := h; frames_per_turn := fpt;
   let tile_size = tile_size () in
-  view_w := Graphics.size_x ();
-  view_h := Graphics.size_y () - info_h ();
+  view_w := window_width ();
+  view_h := window_height () - info_h ();
   view_x := !width/2 * tile_size - !view_w/2;
   view_y := !height/2 * tile_size - !view_h/2;
   target_x := !view_x;
   target_y := !view_y;
   clear ()
 
+let rescale n =
+  scale := max 1 (!scale + n);
+  dirty := true
+
+let fullscreen () =
+  Raylib.toggle_fullscreen ()
+
 let preinit () =
-  Graphics.open_graph "";
-  Graphics.resize_window (!scale * 320) (!scale * 200);  (* nop on Windows? *)
-  Graphics.set_color Graphics.black;
-  reset (1, 1) !frames_per_turn;
-  Graphics.set_window_title "Boulder Dash";
-
-  Graphics.set_color (Graphics.rgb 0xbf 0xcd 0x7a);
-  Graphics.set_text_size 40;  (* doesn't seem to do anything on Windows... *)
-  let s = "BOULDER DASH is loading..." in
-  let w, _ = Graphics.text_size s in
-  Graphics.moveto (!view_w/2 - w/2) (!view_h/2);
-  Graphics.draw_string s;
-  Graphics.set_color Graphics.black;
-
-  Unix.sleepf 0.3;  (* work around occasional crash on Windows *)
-  Graphics.auto_synchronize false
+  Raylib.(set_trace_log_level TraceLogLevel.Error);
+  Raylib.init_window (!scale * 320) (!scale * 200) "Boulder Dash";
+  Raylib.(set_window_state [ConfigFlags.Window_resizable]);
+  reset (1, 1) !frames_per_turn
 
 let init () = ()
 
 let deinit () =
-  Graphics.close_graph ()
+  Raylib.close_window ()
 
 
 (* Initialise Sprites *)
 
-let _ = preinit ()  (* has to run before Graphics.make_image *)
+let _ = preinit ()  (* has to run before Raylib.load_image *)
 
-let bmp = Bmp.load Filename.(concat (dirname Sys.argv.(0)) "sprites.bmp") 1
+let bmp =
+  Raylib.load_image Filename.(concat (dirname Sys.argv.(0)) "sprites.bmp")
 
-let fetch x y w h scale recolor =
-  Array.init (h * scale) (fun j -> Array.init (w * scale) (fun i ->
-    let c = bmp.(y + j/scale).(x + i/scale) in if c = 0xffffff then recolor else c))
+let fetch x y w h =
+  let r = Raylib.Rectangle.create (float x) (float y) (float w) (float h) in
+  Raylib.image_from_image bmp r
 
-let rec make_image bitmap =
-  (* On Windows, fails when the user concurrently resizes the window. 8-} *)
-  try Graphics.make_image bitmap
-  with Graphics.Graphic_failure _ -> make_image bitmap
+let tile y x = let sz = sprite_size in fetch (sz * x) (sz * y) sz sz
+let character y x = fetch (letter_w * x) (letter_h * y) letter_w letter_h
 
-let tile y x =
-  let sz = sprite_size in make_image (fetch (sz * x) (sz * y) sz sz !scale 0xffffff)
+let animation y x n m =
+  Array.init (n*m) (fun i -> Raylib.load_texture_from_image (tile y (x + i/m)))
 
-let character y x color =
-  make_image (fetch (letter_w * x) (letter_h * y) letter_w letter_h !scale color)
+let alphabet = Array.init 256 (fun i ->
+  if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
 
-let animation y x n m = Array.init (n * m) (fun i -> tile y (x + i/m))
-let alphabet color = Array.init 256 (fun i ->
-  (if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
-    color)
-
-let alphabet_white = alphabet 0xffffff
-let alphabet_yellow = alphabet 0xbfcd7a
+let alphabet_white = Array.map Raylib.load_texture_from_image alphabet
+let _ = Array.iter (fun img ->
+  Raylib.(image_color_replace (addr img) white yellow)) alphabet
+let alphabet_yellow = Array.map Raylib.load_texture_from_image alphabet
 
 let space = animation 2 0 1 1
 let dirt = animation 2 1 1 1
@@ -113,7 +125,7 @@ let wall = animation 2 8 1 1
 let mill = animation 2 9 4 1
 let flickers = animation 2 13 2 1
 let _unused = animation 2 15 1 1
-let entry = animation 3 0 4 1  let _ = entry.(0) <- tile 6 0
+let entry = animation 3 0 4 1  let _ = entry.(0) <- (animation 6 0 1 1).(0)
 let explosion_space = animation 3 0 4 1
 let explosion_diamond = animation 3 4 4 1
 let diamond = animation 3 8 8 1
@@ -178,17 +190,19 @@ let draw tile x y =
   let y' = y * size - !view_y in
   if -size < x' && x' < !view_w
   && -size < y' && y' < !view_h then
-    Graphics.draw_image tile x' (Graphics.size_y () - y' - size - info_h ())
+    let v = Raylib.Vector2.create (float x') (float (y' + info_h ())) in
+    Raylib.draw_texture_ex tile v 0.0 (float !scale) white
 
 let start () =
-  let new_w = Graphics.size_x () in
-  let new_h = Graphics.size_y () - info_h () in
+  let new_w = window_width () in
+  let new_h = window_height () - info_h () in
   if new_w <> !view_w || new_h <> !view_h then  (* window was resized *)
   (
     view_w := new_w;
     view_h := new_h;
     clear ()
-  )
+  );
+  Raylib.begin_drawing ()
 
 let render (x, y) tile_opt ~frame ~face ~won ~force =
   let ani =
@@ -198,20 +212,21 @@ let render (x, y) tile_opt ~frame ~face ~won ~force =
       rockford_animation (frame mod 24 <> 0) face
     | Some tile -> animation tile
   in
-  if !dirty || Array.length ani > 1 || force then
+  if true || !dirty || Array.length ani > 1 || force then
     draw ani.(frame mod Array.length ani) x y
 
 let finish () =
   let info_w = info_w () in
   let info_h = info_h () in
-  if !view_w > info_w then (* clear possibly dirty upper corners *)
+  let win_w = window_width () in
+  if win_w > info_w then (* clear possibly dirty upper corners *)
   (
-    let left = (!view_w - info_w)/2 in
-    let right = !view_w - info_w - left in
-    Graphics.fill_rect 0 !view_h left info_h;
-    Graphics.fill_rect (left + info_w) !view_h right info_h;
+    let left = (win_w - info_w)/2 in
+    let right = win_w - info_w - left in
+    Raylib.draw_rectangle 0 0 left info_h black;
+    Raylib.draw_rectangle (left + info_w) 0 right info_h black;
   );
-  Graphics.synchronize ();
+  Raylib.end_drawing ();
   dirty := !flickering = 1;
   if !flickering > 0 then decr flickering
 
@@ -223,10 +238,11 @@ type color = White | Yellow
 let print alphabet (x, y) s =
   let char_w = char_w () in
   let char_h = char_h () in
-  let offset = max 0 ((Graphics.size_x () - info_w ())/2) in
+  let offset = max 0 ((window_width () - info_w ())/2) in
   for i = 0 to String.length s - 1 do
-    Graphics.draw_image alphabet.(Char.code s.[i])
-      (offset + (x + i) * char_w) (Graphics.size_y () - (y + 1) * char_h)
+    let v = Raylib.Vector2.create
+      (float (offset + (x + i) * char_w)) (float (y * char_h)) in
+    Raylib.draw_texture_ex alphabet.(Char.code s.[i]) v 0.0 (float !scale) white
   done
 
 let print = function
@@ -240,8 +256,9 @@ let flicker () =
   flickering := 150
 
 let flash () =
-  Graphics.clear_graph ();
-  Graphics.synchronize ();
+  Raylib.begin_drawing ();
+  Raylib.clear_background white;
+  Raylib.end_drawing ();
   Unix.sleepf 0.05;
   clear ()
 
@@ -251,12 +268,12 @@ let flash () =
 let clamp lo hi x = max lo (min hi x)
 
 let scroll (x, y) =  (* center on tile position x, y *)
-  Graphics.auto_synchronize false; (* appears to get reset on window resizes? *)
   let tile_size = tile_size () in
+  let info_h = info_h () in
   let map_w = !width * tile_size in
   let map_h = !height * tile_size in
-  let new_view_w = Graphics.size_x () in
-  let new_view_h = Graphics.size_y () - info_h () in
+  let new_view_w = window_width () in
+  let new_view_h = window_height () - info_h in
   dirty := !dirty || new_view_w > !view_w || new_view_h > !view_h;
   view_w := new_view_w;
   view_h := new_view_h;
@@ -287,7 +304,8 @@ let scroll (x, y) =  (* center on tile position x, y *)
   let dx = min step (abs (!target_x - !view_x)) * compare !target_x !view_x in
   let dy = min step (abs (!target_y - !view_y)) * compare !target_y !view_y in
 
-  if dx <> 0 || dy <> 0 then
+  if dx <> 0 || dy <> 0 || !view_x < 0 || !view_y < 0
+  || map_w - !view_x < !view_w || map_w - !view_x < !view_w then
   (
     view_x := !view_x + dx;
     view_y := !view_y + dy;
@@ -295,14 +313,14 @@ let scroll (x, y) =  (* center on tile position x, y *)
     (* Clear borders if map smaller than window (may be dirty from resizing) *)
     if !view_x < 0 || map_w - !view_x < !view_w then
     (
-      Graphics.fill_rect 0 0 (max 0 (- !view_x)) !view_h;
-      Graphics.fill_rect (map_w - !view_x) 0
-        (max 0 (!view_w - map_w + !view_x)) !view_h;
+      Raylib.draw_rectangle 0 info_h (max 0 (- !view_x)) !view_h black;
+      Raylib.draw_rectangle (map_w - !view_x) info_h
+        (max 0 (!view_w - map_w + !view_x)) !view_h black;
     );
-    if !view_y < 0 || map_h - !view_y < !view_h then
+    if !view_y < 0 || map_w - !view_x < !view_w then
     (
-      Graphics.fill_rect 0 0 !view_w (max 0 (!view_h - map_h + !view_y));
-      Graphics.fill_rect 0 (!view_h - max 0 (- !view_y))
-        !view_w (max 0 (!view_h - map_h + !view_y));
+      Raylib.draw_rectangle 0 info_h !view_w (max 0 (- !view_y)) black;
+      Raylib.draw_rectangle 0 (map_h - !view_y + info_h)
+        !view_w (max 0 (!view_h - map_h + !view_y)) black;
     );
   )

@@ -49,6 +49,9 @@ let input game (cave : Cave.cave) key : bool =
   | '\b' -> raise (Advance (-1))
   | '+' -> raise (Advance (+Levels.count))
   | '-' -> raise (Advance (-Levels.count))
+  | '[' -> Render.rescale (-1)
+  | ']' -> Render.rescale (+1)
+  | 'F' -> Render.fullscreen ()
   | '\x1b' -> exit 0
   | _ -> ()
   );

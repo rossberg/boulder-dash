@@ -1,6 +1,6 @@
 (executable
   (public_name boulderdash)
   (name main)
-  (modules bmp cave step render levels input game main)
-  (libraries unix graphics)
+  (modules cave step render levels input game main)
+  (libraries unix raylib)
 )
