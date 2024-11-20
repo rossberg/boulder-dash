@@ -3,22 +3,6 @@
 let fps = ref 30.0
 
 
-(* Keyboard management *)
-
-let get_key () =
-  let key = ref '\x00' in
-  while Graphics.key_pressed () do  (* get most recent reading *)
-    key := Graphics.read_key ()
-  done;
-  let upper = Char.uppercase_ascii !key in
-  upper, !key = upper
-
-let rec wait_key () =
-  match fst (get_key ()) with
-  | '\x00' -> Unix.sleepf 0.05; wait_key ()
-  | key -> key
-
-
 (* Game loop *)
 
 type game =
@@ -73,7 +57,7 @@ let input game (cave : Cave.cave) key : bool =
 
 (* Make a simulation turn *)
 let turn game (cave : Cave.cave) =
-  let key, shift = get_key () in
+  let key, shift = Input.get () in
   cave.rockford.reach <- shift;
   if cave.rockford.presence = Present then
     cave.rockford.face <-
@@ -98,7 +82,7 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  ignore (input game cave (fst (get_key ())))
+  ignore (input game cave (fst (Input.get ())))
 
 
 (* Render an animation frame *)
@@ -223,6 +207,6 @@ let rec play () =
   else
     Render.print White (6, 12) "GAME OVER";
   Render.finalize ();
-  if wait_key () = '\x1b' then exit 0;
+  if Input.wait () = '\x1b' then exit 0;
   Render.clear ();
   play ()

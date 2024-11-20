@@ -99,6 +99,7 @@ The modules are:
 - `Game` - the main game loop
 - `Render` - the graphics backend
 - `Levels` - the original binary levels data with a decoder
+- `Input` - handle keyboard input
 - `Bmp` - a simple decoder for .bmp files
 - `Main` - main entry point
 
