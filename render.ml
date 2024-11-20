@@ -194,9 +194,13 @@ let render (x, y) tile_opt ~frame ~face ~won ~force =
 let finalize () =
   let tile_size = 16 * !scale in
   let info_w = 20 * tile_size in
-  if Graphics.size_x () > info_w then (* clear possibly dirty upper right *)
-    Graphics.fill_rect info_w (Graphics.size_y () - tile_size - 1)
-      (Graphics.size_x () - info_w) tile_size;
+  if !view_w > info_w then (* clear possibly dirty upper corners *)
+  (
+    let left = (!view_w - info_w)/2 in
+    let right = !view_w - info_w - left in
+    Graphics.fill_rect 0 (!view_w - tile_size) left tile_size;
+    Graphics.fill_rect (left + info_w) (!view_w - tile_size) right tile_size;
+  );
   Graphics.synchronize ();
   dirty := !flickering = 1;
   if !flickering > 0 then decr flickering
@@ -208,9 +212,12 @@ type color = White | Yellow
 
 let print alphabet (x, y) s =
   let tile_size = 16 * !scale in
+  let info_w = 20 * tile_size in
+  let offset = max 0 ((Graphics.size_x () - info_w)/2) in
   for i = 0 to String.length s - 1 do
     Graphics.draw_image alphabet.(Char.code s.[i])
-      ((x + i) * tile_size) (Graphics.size_y () - (y + 1) * tile_size/2)
+      (offset + (x + i) * tile_size)
+      (Graphics.size_y () - (y + 1) * tile_size/2)
   done
 
 let print = function
@@ -226,7 +233,7 @@ let flicker () =
 let flash () =
   Graphics.clear_graph ();
   Graphics.synchronize ();
-  Unix.sleepf 0.05;  (* work around oddity of Graphics library *)
+  Unix.sleepf 0.05;
   clear ()
 
 
