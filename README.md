@@ -109,7 +109,7 @@ Little surprising to say there, please look at the code for details. For what it
 
 * Peter Liepa and Chris Gray for making the [original](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) [game](https://boulder-dash.com/retro-gamer-magazine/).
 
-* Peter Broadribb for various [documents](https://www.artsoft.org/rocksndiamonds/levels/martijnmooij/2012-11-07/www.bd-fans.com/FanStuff.html#Programming) reverse-engineering internals of the original.
+* Peter Broadribb for various [documents](https://www.elmerproductions.com/sp/peterb/) reverse-engineering internals of the original.
 
 * Martijn Mooij for the [Boulder Dash Fan site](http://www.bd-fans.com/) hosting lots of material (defunct, [mirror](https://www.artsoft.org/rocksndiamonds/levels/martijnmooij/2012-11-07/www.bd-fans.com/index.html)).
 
