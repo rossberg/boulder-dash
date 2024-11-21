@@ -43,7 +43,7 @@ let input game (cave : Cave.cave) key : bool =
       game.lives <- game.lives - 1;
       raise (Advance (if cave.intermission then 1 else 0))
     | Exited when cave.time <= 0.0 -> raise (Advance 1)
-    | _ -> ()
+    | _ -> step := true
     )
   | '\t' -> raise (Advance (+1))
   | '\b' -> raise (Advance (-1))
@@ -88,7 +88,7 @@ let reveal game cave n revealed =
 (* Render an animation frame *)
 let render game cave frame revealed =
   incr frame;
-  Render.prepare ();
+  Render.start ();
 
   (* Map *)
   Render.scroll cave.Cave.rockford.pos;
@@ -127,7 +127,7 @@ let render game cave frame revealed =
   Render.print Yellow (0, 1)
     (if blink then "   $$$ PAUSED $$$   " else "                    ");
 
-  Render.finalize ()
+  Render.finish ()
 
 
 (* Play one level *)
@@ -201,12 +201,14 @@ let rec play () =
     );
     game.score <- cave.score
   done;
+
   Render.clear ();
+  Render.start ();
   if game.lives > 0 then
     Render.print Yellow (3, 12) "@$ YOU BEAT IT!"
   else
     Render.print White (6, 12) "GAME OVER";
-  Render.finalize ();
+  Render.finish ();
   if Input.wait () = '\x1b' then exit 0;
-  Render.clear ();
+
   play ()

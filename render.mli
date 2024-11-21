@@ -31,10 +31,10 @@ val flicker : unit -> unit
 (** Initiates a 5 second flickering animation for space tiles. *)
 
 
-val prepare : unit -> unit
+val start : unit -> unit
 (** Starts a new animation frame. *)
 
-val finalize : unit -> unit
+val finish : unit -> unit
 (** Ends an animation frame. *)
 
 val render : grid_pos -> Cave.tile option ->

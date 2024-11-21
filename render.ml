@@ -2,7 +2,10 @@
 
 type grid_pos = int * int
 
-let sprite_size = 16
+let sprite_size = 16  (* size of sprite in graphics file *)
+let letter_w = sprite_size  (* size of letter sprite *)
+let letter_h = sprite_size/2
+
 let scale = ref 4
 let width = ref 1  (* in tiles *)
 let height = ref 1
@@ -15,9 +18,14 @@ let view_y = ref 0
 let target_x = ref 0  (* target position for scrolling *)
 let target_y = ref 0
 
-
 let dirty = ref true
 let flickering = ref 0
+
+let tile_size () = sprite_size * !scale
+let char_w () = tile_size ()
+let char_h () = tile_size () / 2
+let info_w () = 20 * char_w ()
+let info_h () = 2 * char_h ()
 
 
 (* Initialisation *)
@@ -33,9 +41,9 @@ let clear () =
 
 let reset (w, h) fpt =
   width := w; height := h; frames_per_turn := fpt;
-  let tile_size = sprite_size * !scale in
+  let tile_size = tile_size () in
   view_w := Graphics.size_x ();
-  view_h := Graphics.size_y () - tile_size;
+  view_h := Graphics.size_y () - info_h ();
   view_x := !width/2 * tile_size - !view_w/2;
   view_y := !height/2 * tile_size - !view_h/2;
   target_x := !view_x;
@@ -81,10 +89,13 @@ let rec make_image bitmap =
   try Graphics.make_image bitmap
   with Graphics.Graphic_failure _ -> make_image bitmap
 
-let sprite y x = make_image (fetch (16 * x) (16 * y) 16 16 !scale 0xffffff)
-let character y x color = make_image (fetch (16 * x) (8 * y) 16 8 !scale color)
+let tile y x =
+  let sz = sprite_size in make_image (fetch (sz * x) (sz * y) sz sz !scale 0xffffff)
 
-let animation y x n m = Array.init (n * m) (fun i -> sprite y (x + i/m))
+let character y x color =
+  make_image (fetch (letter_w * x) (letter_h * y) letter_w letter_h !scale color)
+
+let animation y x n m = Array.init (n * m) (fun i -> tile y (x + i/m))
 let alphabet color = Array.init 256 (fun i ->
   (if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
     color)
@@ -102,7 +113,7 @@ let wall = animation 2 8 1 1
 let mill = animation 2 9 4 1
 let flickers = animation 2 13 2 1
 let _unused = animation 2 15 1 1
-let entry = animation 3 0 4 1  let _ = entry.(0) <- sprite 6 0
+let entry = animation 3 0 4 1  let _ = entry.(0) <- tile 6 0
 let explosion_space = animation 3 0 4 1
 let explosion_diamond = animation 3 4 4 1
 let diamond = animation 3 8 8 1
@@ -118,7 +129,7 @@ let rockford_left = animation 8 0 8 1
 let rockford_right = animation 8 8 8 1
 
 
-(* Sprite Rendering *)
+(* Tile Rendering *)
 
 let animation = function
   | Cave.Space -> if !flickering > 0 then flickers else space
@@ -161,18 +172,17 @@ let rockford_animation ch face =
   in
   (if face = None then last_rockford_idle else last_rockford_walk) := ani; ani
 
-let draw sprite x y =
-  let tile_size = 16 * !scale in
-  let x' = x * tile_size - !view_x in
-  let y' = y * tile_size - !view_y in
-  if -tile_size < x' && x' < !view_w
-  && -tile_size < y' && y' < !view_h then
-    Graphics.draw_image sprite x' (Graphics.size_y () - y' - 2*tile_size)
+let draw tile x y =
+  let size = tile_size () in
+  let x' = x * size - !view_x in
+  let y' = y * size - !view_y in
+  if -size < x' && x' < !view_w
+  && -size < y' && y' < !view_h then
+    Graphics.draw_image tile x' (Graphics.size_y () - y' - size - info_h ())
 
-let prepare () =
-  let tile_size = 16 * !scale in
+let start () =
   let new_w = Graphics.size_x () in
-  let new_h = Graphics.size_y () - tile_size in
+  let new_h = Graphics.size_y () - info_h () in
   if new_w <> !view_w || new_h <> !view_h then  (* window was resized *)
   (
     view_w := new_w;
@@ -191,15 +201,15 @@ let render (x, y) tile_opt ~frame ~face ~won ~force =
   if !dirty || Array.length ani > 1 || force then
     draw ani.(frame mod Array.length ani) x y
 
-let finalize () =
-  let tile_size = 16 * !scale in
-  let info_w = 20 * tile_size in
+let finish () =
+  let info_w = info_w () in
+  let info_h = info_h () in
   if !view_w > info_w then (* clear possibly dirty upper corners *)
   (
     let left = (!view_w - info_w)/2 in
     let right = !view_w - info_w - left in
-    Graphics.fill_rect 0 (!view_w - tile_size) left tile_size;
-    Graphics.fill_rect (left + info_w) (!view_w - tile_size) right tile_size;
+    Graphics.fill_rect 0 !view_h left info_h;
+    Graphics.fill_rect (left + info_w) !view_h right info_h;
   );
   Graphics.synchronize ();
   dirty := !flickering = 1;
@@ -211,13 +221,12 @@ let finalize () =
 type color = White | Yellow
 
 let print alphabet (x, y) s =
-  let tile_size = 16 * !scale in
-  let info_w = 20 * tile_size in
-  let offset = max 0 ((Graphics.size_x () - info_w)/2) in
+  let char_w = char_w () in
+  let char_h = char_h () in
+  let offset = max 0 ((Graphics.size_x () - info_w ())/2) in
   for i = 0 to String.length s - 1 do
     Graphics.draw_image alphabet.(Char.code s.[i])
-      (offset + (x + i) * tile_size)
-      (Graphics.size_y () - (y + 1) * tile_size/2)
+      (offset + (x + i) * char_w) (Graphics.size_y () - (y + 1) * char_h)
   done
 
 let print = function
@@ -239,15 +248,15 @@ let flash () =
 
 (* Scrolling, following player as in the original but with window resizing *)
 
-let clip lo hi x = max lo (min hi x)
+let clamp lo hi x = max lo (min hi x)
 
 let scroll (x, y) =  (* center on tile position x, y *)
   Graphics.auto_synchronize false; (* appears to get reset on window resizes? *)
-  let tile_size = sprite_size * !scale in
+  let tile_size = tile_size () in
   let map_w = !width * tile_size in
   let map_h = !height * tile_size in
   let new_view_w = Graphics.size_x () in
-  let new_view_h = Graphics.size_y () - tile_size in
+  let new_view_h = Graphics.size_y () - info_h () in
   dirty := !dirty || new_view_w > !view_w || new_view_h > !view_h;
   view_w := new_view_w;
   view_h := new_view_h;
@@ -259,13 +268,13 @@ let scroll (x, y) =  (* center on tile position x, y *)
   let min_y = - max 0 (!view_h - map_h) / 2 in
   let max_x = max min_x (map_w - !view_w) in
   let max_y = max min_y (map_h - !view_h) in
-  let new_x' = clip min_x max_x new_x in
-  let new_y' = clip min_y max_y new_y in
+  let new_x' = clamp min_x max_x new_x in
+  let new_y' = clamp min_y max_y new_y in
 
   (* Scroll back to center, but only if we are close to the view's edge *)
   let slack_x = max 0 (!view_w/2 - 4 * tile_size) in
   let slack_y = max 0 (!view_h/2 - 4 * tile_size) in
-  (* Compare unclipped values, so that we can reach the border! *)
+  (* Compare unclamped values, so that we can reach the border! *)
   if new_x < !view_x - slack_x || new_x > !view_x + slack_x
   || min_x < 0 || max_x < !view_x then  (* window became wider *)
     target_x := new_x';
