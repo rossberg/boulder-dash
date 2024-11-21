@@ -4,12 +4,14 @@
 
 This is a homage to its 40th anniversary in form of a fairly faithful clone of the original game, implemented in just a few 100 lines of bare OCaml, with nothing but the homely [Graphics](https://github.com/ocaml/graphics) library. It should run on Windows, Mac, and Linux, though I was too lazy to test the latter.
 
+Alternatively, it can be built with either the [TSDL](https://github.com/dbuenzli/tsdl) (Thin [SDL](https://www.libsdl.org)) binding for OCaml, or with [OCaml Raylib](https://github.com/tjammer/raylib-ocaml), the OCaml binding to the simple [Raylib](https://www.raylib.com/) game engine. Both give a better user experience, for the price of a harder build experience.
+
 
 ### Features
 
 * Faithful original physics, graphics, and animations
-* Authentic scrolling mechanics combined with dynamic window resizing
-* All 20 levels, including intermissions, and 5 difficulties
+* Authentic scrolling mechanics combined with dynamic window resizing and rescaling
+* All 20 levels and 5 difficulties
 * Pause-and-go mode for relaxed playing
 
 The game engine can also handle the features from Boulder Dash 2, namely Expanding Walls and Slime, but currently includes no levels that use them.
@@ -17,15 +19,17 @@ The game engine can also handle the features from Boulder Dash 2, namely Expandi
 
 ### Building
 
-It should work to invoke
+#### The Graphics build
+
+To build the version of the game using the Graphics library, it should work to invoke
 ```
-dune build
+dune build main_graphics.exe
 ```
 If you are old-school and lazy like me, you can also simply say
 ```
 make
 ```
-and as a bonus, get a link to the executable in the current directory. Of course, that's assuming you're a real programmer working with some Unix-style shell.
+and as a bonus, get a link to the executable in the current directory.
 
 Prerequisites:
 
@@ -33,43 +37,80 @@ Prerequisites:
 
 When the graphics didn't work out of the box (e.g., the window cannot be opened on Mac), I found the recipes [here](https://cs51.io/handouts/setup/) here helpful.
 
-If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you can build and run it with `nix run github:rossberg/boulder-dash?dir=nix`
+If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you, can build and run this version with `nix run github:rossberg/boulder-dash?dir=nix`
+
+
+#### The TDSL build
+
+To build a version of the game using the TSDL library, invoke
+```
+dune build main_tsdl.exe
+```
+Or simpler:
+```
+make tsdl
+```
+
+Prerequisites:
+
+- the TSDL library (`opam install tsdl`)
+
+
+#### The Raylib version
+
+To build a version of the game using the Raylib library, invoke
+```
+dune build main_raylib.exe
+```
+Or simpler:
+```
+make raylib
+```
+
+Prerequisites:
+
+- the Raylib library (`opam install raylib`)
+
+Installing this library worked fine for me on MacOS, but I had trouble getting it to work on Windows, although it should run. Perhaps you are more lucky.
 
 
 ### Controls
 
 Sorry, no joysticks. This game only works with your keyboard. The following keys are recognised:
 
-Game control:
+Game controls:
 
 - `W`, `A`, `S`, `D` - move in the respective direction (poor man's joystick)
 - `Z`, `Q`, `S`, `D` - move in the respective direction if you're French
+- `8`, `4`, `2`, `6` - move in the respective direction on number pad
+- `↑`, `←`, `↓`, `→` - move in the respective direction on arrow keys (TSDL or Raylib engine only)
 - `SHIFT` with the above - grab/reach out without moving (poor man's fire button)
-- `X` - do not move for one turn (useful in pause mode)
+- `SPACE`, `5` - do not move for one turn (useful in pause mode)
 - `K` - kill Rockford (by setting timer to 0)
 - `P` - pause/unpause game
 
-Meta control:
+Meta controls:
 
 - `SPACE` - continue (after Rockford has died or exited)
 - `TAB` - skip current level (cheater!)
 - `BACKSPACE` - go back one level (really?)
-- `+` - increase difficulty
-- `-` - decrease difficulty
+- `+`, `-` - increase/decrease difficulty
+- `F` - toggle full-screen mode (TSDL or Raylib engine only)
+- `[`, `]` - decrease/increase graphics scaling factor (TSDL or Raylib engine only)
 - `ESC` - quit game
 
-When paused, you can still move with `W`, `A`, `S`, `D`, or wait a turn using `X`. That will effectively unpause the game for a single tick and then immediately pause again, using up a single time slice. If you are old and slow like me, or fed up up with the keybord lag (see below), that allows you to play it like a puzzler rather than a stressful action game.
+When paused, you can still move with `W`, `A`, `S`, `D` and friends, or wait a turn using `SPACE`. That will effectively unpause the game for a single tick and then immediately pause again, using up a single time slice. If you are old and slow like me, or fed up up with the keybord lag (see below), that allows you to play it like a puzzler rather than a stressful action game.
 
 There are also a couple of cheat codes, but I won't tell.
 
 Beyond that, Boulder Dash is mostly a self-explanatory game. Figuring out the mechanics of some elements is part of the experience. We didn't have a manual in the olden days either.
 
-Oh, and if you don't like the size of the sprites, you can scale the whole image by passing `--scale <int>` on the command line. The default is 4 (times the original 8-bit sprite sizes, which were designed for the fancy 320x200 displays of the times).
+Oh, and if you don't like the size of the sprites, you can scale the whole image by passing `--scale <int>` on the command line. The default is 4 (times the original 8-bit sprite sizes, which were designed for the fancy 320x200 displays of the times). In the TSDL or Raylib build, you can of course change this dynamically using the `[` and `]` keys.
 
 
-### Limitations
+### Limitations of the Graphics Library
 
-On one hand, I was surprised and thrilled how easy it was to use the Graphics library, and how far I was able to push it with full screen animation and scrolling. On the other, it has a few shortcomings, being the excuse for some limitations of this little game:
+On one hand, I was surprised and thrilled how easy it was to use the Graphics library, and how far I was able to push it with full screen animation and scrolling. On the other, it has a few shortcomings, being the excuse for some limitations to this build of this little game:
 
 - Controls: Keyboard only and a bit sluggish, since the library only offers buffered keyboard input, no direct key events. For the best experience, set your system's key repeat *rate* to max and key repeat *delay* to zero. Also, cursor keys cannot be recognised, so you're stuck with WASD.
 
@@ -85,7 +126,7 @@ On one hand, I was surprised and thrilled how easy it was to use the Graphics li
 
 - Windows: On Windows, some of the API seems defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion.
 
-When I have time and leisure, I may consider porting the program to a more real graphics engine.
+Most of these limitations are lifted in the TSDL and Raylib builds. I still have to implement color changes and sound, though.
 
 
 ### Implementation
@@ -96,12 +137,18 @@ The modules are:
 
 - `Cave` - the representation of a game level
 - `Step` - the core game logic for transitioning a cave one tick
-- `Game` - the main game loop
-- `Render` - the graphics backend
 - `Levels` - the original binary levels data with a decoder
-- `Input` - handle keyboard input
-- `Bmp` - a simple decoder for .bmp files
-- `Main` - main entry point
+- `Game` - the main game loop (functorised over engine)
+- `Render` - the graphics backend (functorised over engine)
+- `Engine` - unified signature for backend engines
+- `Engine_graphics` - wrapper for Graphics library
+- `Engine_tsdl` - wrapper for TSDL library
+- `Engine_raylib` - wrapper for Raylib library
+- `Bmp` - a simple decoder for .bmp files, used by Graphics binding
+- `Main` - common main module (functorised over engine)
+- `Main_graphics` - main entry point for Graphics version
+- `Main_tsdl` - main entry point for TSDL version
+- `Main_raylib` - main entry point for Raylib version
 
 Little surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
 

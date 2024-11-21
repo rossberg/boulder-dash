@@ -1,12 +1,14 @@
 (* Main entry point *)
 
-let _main =
-  try
-    Printexc.record_backtrace true;
-    Render.init ();
-    at_exit Render.deinit;
-    Game.play ();
-  with exn ->
-    prerr_endline ("internal error: " ^ Printexc.to_string exn);
-    Printexc.print_backtrace stderr;
-    Stdlib.exit 2
+module Make (Engine : Engine.S) =
+struct
+	let _main =
+	  try
+	    Printexc.record_backtrace true;
+	    let module Game = Game.Make (Engine) in
+	    Game.play ()
+	  with exn ->
+	    prerr_endline ("internal error: " ^ Printexc.to_string exn);
+	    Printexc.print_backtrace stderr;
+	    Stdlib.exit 2
+end

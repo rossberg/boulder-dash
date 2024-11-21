@@ -5,7 +5,7 @@ let int16_le s i = String.get_int16_le s i
 let int24_le s i = int8 s i + String.get_uint16_le s (i + 1) lsl 8
 let int32_le s i = String.get_int32_le s i |> Int32.to_int
 
-let load file scale =
+let load file =
   let bmp = In_channel.with_open_bin file In_channel.input_all in
   if String.length bmp < 0x0e + 40 then
     failwith ("load_bmp: unsupported size " ^ string_of_int (String.length bmp) ^
@@ -39,16 +39,11 @@ let load file scale =
     failwith ("load_bmp: unsupported size " ^ string_of_int (String.length bmp) ^
       ", expected " ^ string_of_int expected_size);
 
-  let bitmap = Array.init (height*scale) (fun _ -> Array.make (width*scale) 0) in
+  let bitmap = Array.init height (fun _ -> Array.make width 0) in
   for y = 0 to height - 1 do
     let offset = 0x0e + info_size + (height - 1 - y) * line_length in
     for x = 0 to width - 1 do
-      let color = int24_le bmp (offset + 3 * x) in
-      for j = y*scale to (y + 1)*scale - 1 do
-        for i = x*scale to (x + 1)*scale - 1 do
-          bitmap.(j).(i) <- color
-        done
-      done
+      bitmap.(y).(x) <- int24_le bmp (offset + 3 * x)
     done
   done;
   bitmap

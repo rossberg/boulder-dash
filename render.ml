@@ -1,3 +1,6 @@
+module Make (Engine : Engine.S) =
+struct
+
 (* Window state *)
 
 type grid_pos = int * int
@@ -26,8 +29,8 @@ let dirty = ref true
 let flickering = ref 0
 
 let tile_size () = sprite_size * !scale
-let char_w () = tile_size ()
-let char_h () = tile_size () / 2
+let char_w () = letter_w * !scale
+let char_h () = letter_h * !scale
 let info_w () = 20 * char_w ()
 let info_h () = 2 * char_h ()
 
@@ -40,7 +43,6 @@ let _ = Arg.parse
   ignore ""
 
 let win = Engine.open_window (!scale * 320) (!scale * 200) "Boulder Dash"
-let _ = Engine.clear_window win black
 
 let init () = ()
 
@@ -63,7 +65,7 @@ let reset (w, h) fpt =
   clear ()
 
 let rescale n =
-  scale := max 1 (!scale + n);
+  if Engine.can_scale_image then scale := max 1 (!scale + n);
   dirty := true
 
 let fullscreen () =
@@ -81,15 +83,15 @@ let character y x =
   Engine.extract_image bmp (letter_w * x) (letter_h * y) letter_w letter_h
 
 let animation y x n m =
-  Array.init (n * m) (fun i -> Engine.prepare_image win (tile y (x + i/m)))
+  Array.init (n * m) (fun i -> Engine.prepare_image win !scale (tile y (x + i/m)))
 
 let alphabet = Array.init 256 (fun i ->
   if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
 
 let alphabet' = Array.map (fun img -> Engine.recolor_image img white yellow) alphabet
 
-let alphabet_white = Array.map (Engine.prepare_image win) alphabet
-let alphabet_yellow = Array.map (Engine.prepare_image win) alphabet'
+let alphabet_white = Array.map (Engine.prepare_image win !scale) alphabet
+let alphabet_yellow = Array.map (Engine.prepare_image win !scale) alphabet'
 
 let space = animation 2 0 1 1
 let dirt = animation 2 1 1 1
@@ -187,7 +189,7 @@ let render (x, y) tile_opt ~frame ~face ~won ~force =
       rockford_animation (frame mod 24 <> 0) face
     | Some tile -> animation tile
   in
-  if true || !dirty || Array.length ani > 1 || force then
+  if true (*TODO!*) || !dirty || Array.length ani > 1 || force then
     draw ani.(frame mod Array.length ani) x y
 
 let finish () =
@@ -296,3 +298,5 @@ let scroll (x, y) =  (* center on tile position x, y *)
         !view_w (max 0 (!view_h - map_h + !view_y));
     );
   )
+
+end

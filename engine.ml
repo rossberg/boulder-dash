@@ -1,106 +1,85 @@
-(* Output Window *)
+module type S =
+sig
+  (* Output Window *)
 
-type window = unit
+  type window
+  (** An initialized graphics window. *)
 
-let open_window x y title =
-  Raylib.(set_trace_log_level TraceLogLevel.Error);
-  Raylib.init_window x y title;
-  Raylib.(set_window_state [ConfigFlags.Window_resizable])
+  type color
+  (** A screen color. *)
 
-let close_window = Raylib.close_window
+  val open_window : int -> int -> string -> window
+  (** [init w h title] Initialize graphics window with width, height,
+    and window or application title. Must only be called once. *)
 
+  val close_window : window -> unit
+  (** Close graphics. *)
 
-let width_window () =
-  (* Screen width is off when in fullscreen mode *)
-  if Raylib.is_window_fullscreen () then
-    Raylib.(get_monitor_width (get_current_monitor ()))
-  else
-    Raylib.get_screen_width ()
+  val width_window : window -> int
+  (** Get current width of graphics area. *)
 
-let height_window () =
-  (* Screen width is off when in fullscreen mode *)
-  if Raylib.is_window_fullscreen () then
-    Raylib.(get_monitor_height (get_current_monitor ()))
-  else
-    Raylib.get_screen_height ()
+  val height_window : window -> int
+  (** Get current height of graphics area. *)
 
 
-let clear_window () color =
-  (* Clear both buffers *)
-  Raylib.begin_drawing ();
-  Raylib.clear_background color;
-  Raylib.end_drawing ();
-  Raylib.begin_drawing ();
-  Raylib.clear_background color;
-  Raylib.end_drawing ()
+  val clear_window : window -> color -> unit
+  (** Clear window background. *)
 
-let fullscreen_window = Raylib.toggle_fullscreen
+  val fullscreen_window : window -> unit
+  (** Toggle fullscreen mode if available, ignore otherwise. *)
 
 
-(* Animation Frames *)
+  (* Animation Frames *)
 
-let start_frame = Raylib.begin_drawing
-let finish_frame = Raylib.end_drawing
+  val start_frame : window -> unit
+  (** Starts a new animation frame. *)
 
-
-(* Colors *)
-
-type color = Raylib.Color.t
-
-let create_color r g b =
-  Raylib.Color.create r g b 0xff
-
-let draw_color () color x y w h =
-  Raylib.draw_rectangle x y w h color
+  val finish_frame : window -> unit
+  (** Ends an animation frame. *)
 
 
-(* Images *)
+  (* Colors *)
 
-type raw_image = Raylib.Image.t
-type prepared_image = Raylib.Texture2D.t
-
-let load_image = Raylib.load_image
-
-let extract_image img x y w h =
-  Raylib.image_from_image img
-    (Raylib.Rectangle.create (float x) (float y) (float w) (float h))
-
-let recolor_image img src dst =
-  let img' = Raylib.image_copy img in
-  Raylib.image_color_replace (Raylib.addr img') src dst;
-  img'
-
-let prepare_image () = Raylib.load_texture_from_image
-
-let draw_image () img x y scale =
-  let v = Raylib.Vector2.create (float x) (float y) in
-  Raylib.draw_texture_ex img v 0.0 (float scale) Raylib.Color.white
+  val create_color : int -> int -> int -> color
+  (** [create_color r g b] creates a color from 8-bit RGB values. *)
 
 
-(* Keyboard *)
+  val draw_color : window -> color -> int -> int -> int -> int -> unit
+  (** [draw_rectangle win col x y w h] draws a rectangle. *)
 
-let keys = let open Raylib.Key in
-[
-  (* Ordered such that horizontal movement takes precedence *)
-  Left, 'A'; Right, 'D'; Up, 'W'; Down, 'S';
-  Kp_4, 'A'; Kp_6, 'D'; Kp_8, 'W'; Kp_2, 'S'; Kp_5, 'X';
-  A, 'A'; D, 'D'; W, 'W'; S, 'S'; X, 'X';
-  K, 'K'; U, 'U'; O, 'O'; P, 'P';
-  Space, ' '; Enter, '\r'; Kp_enter, '\r';
-  Tab, '\t'; Backspace, '\b'; Escape, '\x1b';
-  Minus, '-'; Equal, '+';
-  F, 'F'; Left_bracket, '['; Right_bracket, ']';
-]
 
-let last = ref Raylib.Key.Null
+  (* Images *)
 
-let get_key () =
-  Raylib.poll_input_events ();
-  if Raylib.window_should_close () then Stdlib.exit 0;
-  let shift =
-    Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift) in
-  match List.find_opt (fun (key, _) -> Raylib.is_key_down key) keys with
-  | None -> last := Raylib.Key.Null; '\x00', shift
-  | Some (_, ('W'|'A'|'S'|'D'|'X' as c)) -> c, shift  (* allow repeat *)
-  | Some (key, _) when key = !last -> '\x00', shift  (* suppress repeat *)
-  | Some (key, c) -> last := key; c, shift
+  type raw_image
+  (** Type of image usable for manipulation. *)
+
+  type prepared_image
+  (** Type of image usable for drawing. *)
+
+  val load_image : string -> raw_image
+  (** Load an image from a file. *)
+
+  val extract_image : raw_image -> int -> int -> int -> int -> raw_image
+  (** [extract_image x y w h] returns a sub image. *)
+
+  val recolor_image : raw_image -> color -> color -> raw_image
+  (** [recolor_image img src dst] exchanges color [src] for [dst] in [img]. *)
+
+  val prepare_image : window -> int -> raw_image -> prepared_image
+  (** Prepare image for drawing with a given scaling factor. Can only be used
+    with open window. *)
+
+  val draw_image : window -> prepared_image -> int -> int -> int -> unit
+  (** [draw_image win img x y scale] draws an image, possibly scaled up. *)
+
+  val can_scale_image : bool
+  (** True if [draw_image] allows dynamic scaling, i.e., other scaling factors
+    than the one previously used with [prepare_image]. *)
+
+
+  (* Keyboard *)
+
+  val get_key : unit -> char * bool
+  (** Check input and returns respective character, '\x00' if none.
+    The Boolean indicates the states of the fire button equivalent. *)
+end

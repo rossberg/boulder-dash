@@ -1,3 +1,9 @@
+module Make (Engine : Engine.S) =
+struct
+
+module Render = Render.Make (Engine)
+
+
 (* Display Configuration *)
 
 let fps = ref 30.0
@@ -71,10 +77,10 @@ let turn game (cave : Cave.cave) =
   if cave.rockford.presence = Present then
     cave.rockford.face <-
       (match key with
-      | 'W' | 'Z' -> Some Up
-      | 'A' | 'Q' -> Some Left
-      | 'S' -> Some Down
-      | 'D' -> Some Right
+      | 'W' | 'Z' | '8' -> Some Up
+      | 'A' | 'Q' | '4' -> Some Left
+      | 'S' | '2' -> Some Down
+      | 'D' | '6' -> Some Right
       | _ -> None
       );
   if input game cave key || not game.paused then Step.step cave
@@ -194,6 +200,11 @@ let play_cave game cave =
 
 (* Play all levels of the game and reiterate after final screen *)
 let rec play () =
+  Render.init ();
+  at_exit Render.deinit;
+  play' ()
+
+and play' () =
   let game = make () in
   while game.lives > 0 && game.difficulty <= 5 do
     let cave = Levels.level game.level game.difficulty in
@@ -220,4 +231,6 @@ let rec play () =
   Render.finish ();
   if wait_input () = '\x1b' then exit 0;
 
-  play ()
+  play' ()
+
+end
