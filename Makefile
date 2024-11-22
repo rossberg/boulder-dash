@@ -1,6 +1,6 @@
 all:
 	dune build
-	ln -sf _build/default/main.exe boulder_dash.exe
+	ln -sf _build/default/main.exe boulderdash.exe
 
 clean:
 	dune clean

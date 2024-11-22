@@ -14,14 +14,13 @@
       perSystem = { config, self', inputs', pkgs, system, ... }: {
 
         packages.default = pkgs.ocamlPackages.buildDunePackage {
-          pname = "boulder_dash";
+          pname = "boulderdash";
           version = "1.0.0";
           src = ../.;
           buildInputs = [ pkgs.ocamlPackages.graphics ];
 
           postInstall = ''
             ln -s ${../sprites.bmp} $out/bin/sprites.bmp
-            mv $out/bin/boulderdash $out/bin/boulder_dash
           '';
         };
 
