@@ -5,6 +5,7 @@
 - Reorg assets; adjust nix
 - Joystick support
 - BD2 levels
+- Remove old Raylib keyboard code
 
 
 # OCaml Boulder Dash
@@ -206,7 +207,7 @@ Version 2 adds the following niceties:
 - Full screen mode
 - Dynamic scaling adjustment
 - Precise keyboard controls and control via arrow keys
-- Instant start-up
+- Fix expired mill wall
 
 
 ### Acknowledgements and Resources
