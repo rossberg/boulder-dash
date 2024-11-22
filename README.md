@@ -126,7 +126,7 @@ On one hand, I was surprised and thrilled how easy it was to use the Graphics li
 
 - Windows: On Windows, some of the API seems defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion.
 
-Most of these limitations are lifted in the TSDL and Raylib builds. I still have to implement color changes and sound, though.
+All of these limitations are lifted in the TSDL and Raylib builds. I still have to implement sound, though.
 
 
 ### Implementation

@@ -3,11 +3,17 @@ struct
 
 (* Window state *)
 
+type color = int * int * int
 type grid_pos = int * int
 
 let black = Engine.create_color 0x00 0x00 0x00
 let white = Engine.create_color 0xff 0xff 0xff
+let grey = Engine.create_color 0x50 0x50 0x50
 let yellow = Engine.create_color 0xbf 0xcd 0x7a
+let brown = Engine.create_color 0x7b 0x5b 0x2f
+let color1 = brown
+let color2 = grey
+let color3 = white
 
 let sprite_size = 16  (* size of sprite in graphics file *)
 let letter_w = sprite_size  (* size of letter sprite *)
@@ -72,18 +78,27 @@ let fullscreen () =
   Engine.fullscreen_window win
 
 
-(* Initialise Sprites *)
+(* Initialise Tiles *)
 
 let bmp =
   Engine.load_image Filename.(concat (dirname Sys.argv.(0)) "sprites.bmp")
 
+type tile = {raw : Engine.raw_image; mutable prepared : Engine.prepared_image}
+
+let all_tiles = ref []
+
 let tile y x =
-  let sz = sprite_size in Engine.extract_image bmp (sz * x) (sz * y) sz sz
+  let sz = sprite_size in
+  let raw = Engine.extract_image bmp (sz * x) (sz * y) sz sz in
+  let prepared = Engine.prepare_image win !scale raw in
+  let tile = {raw; prepared} in
+  all_tiles := tile :: !all_tiles;
+  tile
+
+let animation y x n m = Array.init (n * m) (fun i -> tile y (x + i/m))
+
 let character y x =
   Engine.extract_image bmp (letter_w * x) (letter_h * y) letter_w letter_h
-
-let animation y x n m =
-  Array.init (n * m) (fun i -> Engine.prepare_image win !scale (tile y (x + i/m)))
 
 let alphabet = Array.init 256 (fun i ->
   if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
@@ -102,7 +117,6 @@ let concealed = animation 2 4 4 1
 let wall = animation 2 8 1 1
 let mill = animation 2 9 4 1
 let flickers = animation 2 13 2 1
-let _unused = animation 2 15 1 1
 let entry = animation 3 0 4 1  let _ = entry.(0) <- (animation 6 0 1 1).(0)
 let explosion_space = animation 3 0 4 1
 let explosion_diamond = animation 3 4 4 1
@@ -117,6 +131,24 @@ let rockford_tap = animation 7 0 8 1
 let rockford_blink_tap = animation 7 8 8 1
 let rockford_left = animation 8 0 8 1
 let rockford_right = animation 8 8 8 1
+
+
+(* Color Changes *)
+
+let tmp_color = Engine.create_color 0xff 0x00 0xd0  (* an ugly pink *)
+
+let recolor ((r1, g1, b1), (r2, g2, b2), (r3, g3, b3)) =
+  let color1' = Engine.create_color r1 g1 b1 in
+  let color2' = Engine.create_color r2 g2 b2 in
+  let color3' = Engine.create_color r3 g3 b3 in
+  if Engine.can_scale_image then  (* skip recoloring when too slow *)
+    List.iter (fun tile ->
+      let raw0 = Engine.recolor_image tile.raw color2 tmp_color in
+      let raw1 = Engine.recolor_image raw0 color1 color1' in
+      let raw2 = Engine.recolor_image raw1 tmp_color color2' in
+      let raw3 = Engine.recolor_image raw2 color3 color3' in
+      tile.prepared <- Engine.prepare_image win !scale raw3
+    ) !all_tiles
 
 
 (* Tile Rendering *)
@@ -168,7 +200,7 @@ let draw tile x y =
   let y' = y * size - !view_y in
   if -size < x' && x' < !view_w
   && -size < y' && y' < !view_h then
-    Engine.draw_image win tile x' (y' + info_h ()) !scale
+    Engine.draw_image win tile.prepared x' (y' + info_h ()) !scale
 
 let start () =
   let new_w = Engine.width_window win in
@@ -210,7 +242,7 @@ let finish () =
 
 (* Printing *)
 
-type color = White | Yellow
+type text_color = White | Yellow
 
 let print alphabet (x, y) s =
   let char_w = char_w () in

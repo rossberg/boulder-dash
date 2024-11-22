@@ -207,7 +207,8 @@ let rec play () =
 and play' () =
   let game = make () in
   while game.lives > 0 && game.difficulty <= 5 do
-    let cave = Levels.level game.level game.difficulty in
+    let cave, colors = Levels.level game.level game.difficulty in
+    Render.recolor colors;
     if cave.intermission then extra_life game;
     cave.score <- game.score;
     (try

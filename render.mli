@@ -2,6 +2,9 @@
 
 module Make (_ : Engine.S) :
 sig
+   type color = int * int * int
+   (** An RGB color. *)
+
    type grid_pos = int * int
    (** Represents a position in the cave map,
       or the character matrix of the info area. *)
@@ -18,6 +21,9 @@ sig
    val reset : grid_pos -> float -> unit
    (** [reset (w, h) fpt] resets the window state to a new cave size and refresh
       rate [fpt], denoting how many animation frames fit into one game turn. *)
+
+   val recolor : color * color * color -> unit
+   (** Set the variable colors of the graphics set. *)
 
    val rescale : int -> unit
    (** [rescale n] changes the scaling factor by [n]. *)
@@ -56,9 +62,9 @@ sig
      exited the cave, since both can affect animations. *)
 
 
-   type color = White | Yellow
+   type text_color = White | Yellow
    (** Represents allowable text colors. *)
 
-   val print : color -> grid_pos -> string-> unit
+   val print : text_color -> grid_pos -> string-> unit
    (** Prints text in the requested color at the given info grid position. *)
 end

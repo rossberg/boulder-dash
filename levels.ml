@@ -158,24 +158,25 @@ let data =
   "\x02\x50\x08\x07\x03\x03\x25\x03\x03\x04\x09\x0A\xFF";
 |]
 
+type color = int * int * int
 let colors =  (* C64 colors, http://unusedino.de/ec64/technical/misc/vic656x/colors/ *)
 [|
-  0x000000;  (* black *)
-  0xffffff;  (* white *)
-  0x744335;  (* red *)
-  0x7CACBA;  (* cyan *)
-  0x7B4890;  (* purple *)
-  0x64974F;  (* green *)
-  0x403285;  (* blue *)
-  0xBFCD7A;  (* yellow *)
-  0x7B5B2F;  (* orange *)
-  0x4F4500;  (* brown *)
-  0xA37265;  (* light red *)
-  0x505050;  (* dark grey *)
-  0x787878;  (* grey *)
-  0xA4D78E;  (* light green *)
-  0x786ABD;  (* light blue *)
-  0x9F9F9F;  (* light grey *)
+  0x00, 0x00, 0x00;  (* black *)
+  0xff, 0xff, 0xff;  (* white *)
+  0x74, 0x43, 0x35;  (* red *)
+  0x7c, 0xac, 0xba;  (* cyan *)
+  0x7b, 0x48, 0x90;  (* purple *)
+  0x64, 0x97, 0x4f;  (* green *)
+  0x40, 0x32, 0x85;  (* blue *)
+  0xbf, 0xcd, 0x7a;  (* yellow *)
+  0x7b, 0x5b, 0x2f;  (* orange *)
+  0x4f, 0x45, 0x00;  (* brown *)
+  0xa3, 0x72, 0x65;  (* light red *)
+  0x50, 0x50, 0x50;  (* dark grey *)
+  0x78, 0x78, 0x78;  (* grey *)
+  0xa4, 0xd7, 0x8e;  (* light green *)
+  0x78, 0x6a, 0xbd;  (* light blue *)
+  0x9f, 0x9f, 0x9f;  (* light grey *)
 |]
 
 let tiles = let open Cave in function
@@ -225,9 +226,9 @@ let level i difficulty =
   let seeds = ref 0, ref data.(0x04 + difficulty - 1) in
   let needed = data.(0x09 + difficulty - 1) in
   let time = float_of_int (data.(0x0e + difficulty - 1)) in
-  let _color1 = colors.(data.(0x13)) in
-  let _color2 = colors.(data.(0x14)) in
-  let _color3 = colors.(data.(0x15)) in
+  let color1 = colors.(data.(0x13)) in
+  let color2 = colors.(data.(0x14)) in
+  let color3 = colors.(data.(0x15) - 8) in
   let randoms = [|data.(0x18); data.(0x19); data.(0x1A); data.(0x1B)|] in
   let probability = [|data.(0x1c); data.(0x1d); data.(0x1e); data.(0x1f)|] in
 
@@ -307,4 +308,4 @@ let level i difficulty =
   rect Cave.Steel 0 0 width height;
   interpret 0x20;
 
-  cave
+  cave, (color1, color2, color3)
