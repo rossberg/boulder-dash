@@ -1,20 +1,20 @@
 (executable
   (public_name boulderdash)
   (name main_graphics)
-  (modules bmp engine engine_graphics cave step render levels game main main_graphics)
+  (modules bmp engine engine_graphics cave physics render sound levels game main main_graphics)
   (libraries unix graphics)
 )
 
 (executable
   (public_name boulderdash_raylib)
   (name main_raylib)
-  (modules engine engine_raylib cave step render levels game main main_raylib)
+  (modules engine engine_raylib cave physics render sound levels game main main_raylib)
   (libraries unix raylib)
 )
 
 (executable
   (public_name boulderdash_tsdl)
   (name main_tsdl)
-  (modules engine engine_tsdl cave step render levels game main main_tsdl)
+  (modules engine engine_tsdl cave physics render sound levels game main main_tsdl)
   (libraries unix tsdl)
 )

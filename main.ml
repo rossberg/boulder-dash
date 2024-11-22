@@ -1,4 +1,4 @@
-(* Main entry point *)
+(* Main Entry Point *)
 
 module Make (Engine : Engine.S) =
 struct

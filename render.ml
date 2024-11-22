@@ -20,6 +20,7 @@ let letter_w = sprite_size  (* size of letter sprite *)
 let letter_h = sprite_size/2
 
 let scale = ref 4
+let old_scale = ref (-1)  (* swapped when toggling fullscreen *)
 let width = ref 1  (* in tiles *)
 let height = ref 1
 let frames_per_turn = ref 1.0
@@ -49,11 +50,7 @@ let _ = Arg.parse
   ignore ""
 
 let win = Engine.open_window (!scale * 320) (!scale * 200) "Boulder Dash"
-
-let init () = ()
-
-let deinit () =
-  Engine.close_window win
+let _ = at_exit (fun () -> Engine.close_window win)
 
 let clear () =
   dirty := true;  (* invalidate all screen *)
@@ -70,12 +67,20 @@ let reset (w, h) fpt =
   target_y := !view_y;
   clear ()
 
-let rescale n =
-  if Engine.can_scale_image then scale := max 1 (!scale + n);
+let rescale delta =
+  if Engine.can_scale_image then scale := max 1 (!scale + delta);
   dirty := true
 
 let fullscreen () =
-  Engine.fullscreen_window win
+  let old_w = Engine.width_window win in
+  Engine.fullscreen_window win;
+  let new_w = Engine.width_window win in
+  let new_scale =
+    if !old_scale <> -1 then !old_scale else
+    !scale * new_w / old_w  (* adjust for resolution change *)
+  in
+  old_scale := !scale;
+  rescale (new_scale - !scale)
 
 
 (* Initialise Tiles *)
@@ -221,7 +226,7 @@ let render (x, y) tile_opt ~frame ~face ~won ~force =
       rockford_animation (frame mod 24 <> 0) face
     | Some tile -> animation tile
   in
-  if true (*TODO!*) || !dirty || Array.length ani > 1 || force then
+  if Engine.is_buffered_frame || !dirty || Array.length ani > 1 || force then
     draw ani.(frame mod Array.length ani) x y
 
 let finish () =
@@ -261,7 +266,7 @@ let print = function
 (* Special effects *)
 
 let flicker () =
-  flickering := 150
+  flickering := 120  (* duration in frames *)
 
 let flash () =
   Engine.clear_window win white;

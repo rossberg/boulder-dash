@@ -1,3 +1,5 @@
+(* Unified Backend Engine Signature *)
+
 module type S =
 sig
   (* Output Window *)
@@ -36,6 +38,9 @@ sig
 
   val finish_frame : window -> unit
   (** Ends an animation frame. *)
+
+  val is_buffered_frame : bool
+  (** True if the engine uses double buffering. *)
 
 
   (* Colors *)
@@ -79,7 +84,34 @@ sig
 
   (* Keyboard *)
 
-  val get_key : unit -> char * bool
+  val get_key : unit -> char * [`Press | `Repeat] * bool
   (** Check input and returns respective character, '\x00' if none.
     The Boolean indicates the states of the fire button equivalent. *)
+
+
+  (* Sound *)
+
+  type audio
+  (** An intialized audio device *)
+
+  type sound
+  (** A sound sample. *)
+
+  val open_audio : unit -> audio
+  (** Initialise audio device *)
+
+  val close_audio : audio -> unit
+  (** Close audio device *)
+
+  val load_sound : string -> sound
+  (** Load a sound from a file. *)
+
+  val play_sound : audio -> sound -> unit
+  (** Play a sound. *)
+
+  val stop_sound : audio -> sound -> unit
+  (** Stop a sound. *)
+
+  val is_playing_sound : audio -> sound -> bool
+  (** Test whether the sound is currently playing. *)
 end

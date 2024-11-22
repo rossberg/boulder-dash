@@ -1,12 +1,31 @@
 open Cave
 
 
+(* Events *)
+
+type event =
+  | BoulderBump
+  | DiamondBump
+  | MillActivity
+  | ExpanderActivity
+  | AmoebaActivity
+  | SlimeActivity
+  | Exploding
+  | RockfordWalk
+  | RockfordDig
+  | RockfordCollect
+  | RockfordPush
+  | RockfordEntry
+  | ExitOpen
+
+
 (* Helpers *)
 
 let up (x, y) = (x, y - 1)
 let down (x, y) = (x, y + 1)
 let left (x, y) = (x - 1, y)
 let right (x, y) = (x + 1, y)
+let down2 (x, y) = down (down (x, y))
 
 let towards = function
   | Up -> up
@@ -45,9 +64,11 @@ let indestructable = function  (* immune to explosions *)
 
 (* Step one Turn *)
 
-let step cave =
+let step cave : event list =
+  let events = ref [] in
 
   (* Helper functions on current cave *)
+  let event ev = events := ev :: !events in
   let turn (x, y) = cave.map.(y).(x).turn in
   let get (x, y) = cave.map.(y).(x).tile in
 
@@ -70,6 +91,7 @@ let step cave =
 
   (* Initiate an explosion *)
   let explode (x, y) leftover =
+    event Exploding;
     for j = y - 1 to y + 1 do
       for i = x - 1 to x + 1 do
         if not (indestructable (get (i, j))) then
@@ -79,10 +101,11 @@ let step cave =
   in
 
   (* Move a boulder or diamond *)
-  let item pos mv alter mill =
+  let item pos mv alter mill bump milled =
     match mv, get (down pos) with
-    | _, Space -> move pos down (alter Falling)
+    | _, Space -> move pos down (alter Falling); if mv = Resting then event bump
     | _, below when rounded below ->
+      if mv = Falling then event bump;
       if get (left pos) = Space && get (down (left pos)) = Space then
         move pos left (alter Falling)
       else if get (right pos) = Space && get (down (right pos)) = Space then
@@ -90,17 +113,20 @@ let step cave =
       else
         set pos (alter Resting)
     | Resting, Slime ->
-      if get (down (down pos)) = Space && Random.int cave.slime = 0 then
-        move pos (fun pos -> down (down pos)) (alter Falling)
+      if get (down2 pos) = Space && Random.int cave.slime = 0 then
+        (move pos down2 (alter Falling); event SlimeActivity)
     | Resting, _ -> ()
-    | Falling, Mill state when state = Active || cave.mill.time > 0.0 ->
-      cave.mill.active <- true;
+    | Falling, Mill state ->
       set pos Space;
-      if get (down (down pos)) = Space then
-        set (down (down pos)) (mill Falling)
+      if state = Active || cave.mill.time > 0.0 then
+      (
+        cave.mill.active <- true;
+        if get (down2 pos) = Space then
+          (set (down2 pos) (mill Falling); event milled)
+      )
     | Falling, below ->
       match explosive below with
-      | None -> set pos (alter Resting)
+      | None -> set pos (alter Resting); event bump
       | Some leftover -> explode (down pos) leftover
   in
 
@@ -118,6 +144,7 @@ let step cave =
 
   (* Score a diamond *)
   let collect () =
+    event RockfordCollect;
     cave.diamonds <- cave.diamonds + 1;
     cave.score <- cave.score +
       (if cave.diamonds < cave.needed then cave.value else cave.extra)
@@ -133,20 +160,21 @@ let step cave =
     | Wall -> ()
     | Slime -> ()
 
-    | Boulder mv -> item pos mv boulder diamond
-    | Diamond mv -> item pos mv diamond boulder
+    | Boulder mv -> item pos mv boulder diamond BoulderBump DiamondBump
+    | Diamond mv -> item pos mv diamond boulder DiamondBump BoulderBump
 
     | Firefly dir -> fly pos dir (counter (clockwise dir)) firefly Space
     | Butterfly dir -> fly pos dir (clockwise dir) butterfly (Diamond Resting)
 
     | Expander ->
       if get (left pos) = Space then
-        set (left pos) Expander;
+        (set (left pos) Expander; event ExpanderActivity);
       if get (right pos) = Space then
-        set (right pos) Expander
+        (set (right pos) Expander; event ExpanderActivity);
 
     | Amoeba ->
       cave.amoeba'.size <- cave.amoeba'.size + 1;
+      event AmoebaActivity;
       if adjacent pos Space || adjacent pos Dirt then
         cave.amoeba'.enclosed <- false;
       if cave.amoeba.enclosed then
@@ -160,7 +188,7 @@ let step cave =
 
     | Mill Inactive when cave.mill.active -> set pos (Mill Active)
     | Mill Active when not cave.mill.active -> set pos (Mill Inactive)
-    | Mill _ -> ()
+    | Mill _ -> if cave.mill.active then event MillActivity
 
     | Explosion (0, leftover) -> set pos leftover
     | Explosion (n, leftover) -> set pos (Explosion (n - 1, leftover))
@@ -169,9 +197,11 @@ let step cave =
     | Entry n ->
       cave.rockford.presence <- Arriving;
       cave.rockford.pos <- pos;
-      set pos (Entry (n - 1))
+      set pos (Entry (n - 1));
+      if n = 4 then event RockfordEntry
 
-    | Exit Inactive when cave.diamonds >= cave.needed -> set pos (Exit Active)
+    | Exit Inactive when cave.diamonds >= cave.needed ->
+      set pos (Exit Active); event ExitOpen
     | Exit _ -> ()
 
     | Rockford when cave.time <= 0.0 -> explode pos Space
@@ -185,7 +215,8 @@ let step cave =
         let pos' = next pos in
         match get pos' with
         | Space | Dirt when cave.rockford.reach -> set pos' Space
-        | Space | Dirt -> move pos next Rockford
+        | Space -> move pos next Rockford; event RockfordWalk
+        | Dirt -> move pos next Rockford; event RockfordDig
         | Diamond _ when cave.rockford.reach ->
           collect ();
           set pos' Space
@@ -198,6 +229,7 @@ let step cave =
             Random.int 4 = 0
           ->
           move pos' next (Boulder Resting);
+          event RockfordPush;
           if not cave.rockford.reach then move pos next Rockford
         | Exit Active when not cave.rockford.reach ->
           cave.rockford.pos <- pos';
@@ -215,15 +247,9 @@ let step cave =
 
   cave.amoeba <- cave.amoeba';
   let turn_time = 1.0 /. cave.speed in
+  if cave.rockford.presence = Present then cave.time <- cave.time -. turn_time;
   cave.amoeba.time <- cave.amoeba.time -. turn_time;
   if cave.mill.active then cave.mill.time <- cave.mill.time -. turn_time;
   if cave.mill.time <= 0.0 then cave.mill.active <- false;
 
-  match cave.rockford.presence with
-  | Arriving | Dead -> ()
-  | Present -> cave.time <- cave.time -. turn_time
-  | Exited ->
-    (* Run down timer for score *)
-    let left = min 3.0 cave.time in
-    cave.score <- cave.score + int_of_float left * cave.difficulty;
-    cave.time <- cave.time -. left
+  !events

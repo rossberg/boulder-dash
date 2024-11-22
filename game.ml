@@ -2,6 +2,7 @@ module Make (Engine : Engine.S) =
 struct
 
 module Render = Render.Make (Engine)
+module Sound = Sound.Make (Engine)
 
 
 (* Display Configuration *)
@@ -35,10 +36,12 @@ let extra_life game =
 
 
 (* Process keyboard commands, returns true if it is forcing a step *)
-let input game (cave : Cave.cave) key : bool =
+let input game (cave : Cave.cave) key rep : bool =
   let step = ref false in
   (match key with
-  | 'W' | 'A' | 'S' | 'D' | 'Z' | 'Q' | 'X' -> step := true
+  | 'W' | 'A' | 'S' | 'D' | 'Z' | 'Q' | 'X' | '2' | '4' | '6' | '8' | '5' ->
+    step := true
+  | _ when rep = `Repeat -> ()
   | 'K' when cave.rockford.presence = Present -> cave.time <- 0.0
   | 'U' -> cave.time <- 999.0; game.lives <- 9; Render.flicker ()
   | 'O' -> cave.diamonds <- cave.needed
@@ -63,16 +66,10 @@ let input game (cave : Cave.cave) key : bool =
   );
   !step
 
-(* Wait for key press *)
-let rec wait_input () =
-  match fst (Engine.get_key ()) with
-  | '\x00' -> Unix.sleepf 0.05; wait_input ()
-  | key -> key
-
 
 (* Make a simulation turn *)
 let turn game (cave : Cave.cave) =
-  let key, shift = Engine.get_key () in
+  let key, rep, shift = Engine.get_key () in
   cave.rockford.reach <- shift;
   if cave.rockford.presence = Present then
     cave.rockford.face <-
@@ -83,12 +80,12 @@ let turn game (cave : Cave.cave) =
       | 'D' | '6' -> Some Right
       | _ -> None
       );
-  if input game cave key || not game.paused then Step.step cave
+  if input game cave key rep || not game.paused then Physics.step cave else []
 
 
 (* Make revelation step *)
 let reveal game cave n revealed =
-  for _ = 1 to min 3 !n do
+  for _ = 1 to min 2 !n do
     Array.iter (fun row ->
       let k = ref (Random.int !n) in
       Array.iteri (fun i b ->
@@ -97,7 +94,8 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  ignore (input game cave (fst (Engine.get_key ())))
+  let key, rep, _ = Engine.get_key () in
+  ignore (input game cave key rep)
 
 
 (* Render an animation frame *)
@@ -124,17 +122,18 @@ let render game cave frame revealed =
       Render.print White (0, 0) "     BONUS LIFE     "
     else
       Render.print White (0, 0)
-        (fmt " CAVE %c/%d   LIVES %d " cave.name cave.difficulty game.lives)
+        (fmt "BD%c CAVE %c/%d LIVES %d"
+          cave.name.[0] cave.name.[1] cave.difficulty game.lives)
   )
   else
   (
-    Render.print White (0, 0) (fmt "%c/%d " cave.name cave.difficulty);
+    Render.print White (0, 0) (fmt "%s/%d " cave.name cave.difficulty);
     let n = cave.needed - cave.diamonds in
     let s, v = if n > 0 then fmt "%02d" n, cave.value else "$$", cave.extra in
-    Render.print Yellow (4, 0) s;
-    Render.print White (6, 0) (fmt "$%02d " v);
-    Render.print Yellow (10, 0) (fmt "%03.0f " (max 0.0 cave.time));
-    Render.print White (14, 0) (fmt "%06d" cave.score);
+    Render.print Yellow (5, 0) s;
+    Render.print White (7, 0) (fmt "$%02d " v);
+    Render.print Yellow (11, 0) (fmt "%03.0f " (max 0.0 (cave.time +. 0.49)));
+    Render.print White (15, 0) (fmt "%05d" cave.score);
   );
 
   (* Pause indicator *)
@@ -168,6 +167,7 @@ let play_cave game cave =
     let lag = now -. !time in
     time := now;
     let old_diamonds = cave.diamonds in
+    let old_time = int_of_float cave.time in
 
     (* Check if it's time for advancing a turn *)
     turn_lag := !turn_lag +. lag;
@@ -175,12 +175,16 @@ let play_cave game cave =
     (
       turn_lag := !turn_lag -. turn_time;
       let old_score = cave.score in
-      if !reveal_count > 0 then
-        reveal game cave reveal_count revealed
-      else
-        turn game cave;
+      let sounds =
+        if !reveal_count > 0 then
+          (reveal game cave reveal_count revealed; [Sound.Reveal])
+        else
+          let events = turn game cave in
+          List.map (fun ev -> Sound.Effect ev) events
+      in
       if cave.score/500 > old_score/500 then extra_life game;
       if game.paused then turn_lag := 0.0;
+      List.iter Sound.play sounds;
     );
 
     (* Check if it's time for drawing an animation frame *)
@@ -193,15 +197,52 @@ let play_cave game cave =
       render game cave frame revealed
     );
 
+    (* Run down timer for score *)
+    if cave.rockford.presence = Exited then
+    (
+      let left = min (if cave.time > 100.0 then 9.0 else 1.0) cave.time in
+      cave.score <- cave.score + int_of_float left * cave.difficulty;
+      cave.time <- cave.time -. left;
+      Sound.(if cave.time > 0.0 then play else stop) Sound.TimeSave;
+    );
+
+    (* Play timeout sound *)
+    let new_time = int_of_float cave.time in
+    if new_time < old_time && new_time < 9 then Sound.(play (TimeOut new_time));
+
+    (* Stop ambient sounds if necessary *)
+    if !reveal_count = 0 then Sound.(stop Reveal);
+    if not cave.mill.active then Sound.(stop (Effect Physics.MillActivity));
+    if cave.amoeba.size = 0 then Sound.(stop (Effect Physics.AmoebaActivity));
+
     let pause = min (turn_time -. !turn_lag) (frame_time -. !frame_lag) in
     Unix.sleepf (max 0.0 pause)
   done
 
 
+(* Show splash screen with music *)
+let splash color text =
+  Render.clear ();
+  Render.start ();
+  Render.print color (10 - String.length text / 2, 12) text;
+  Render.finish ();
+
+  (* Wait for key press *)
+  let wait = ref true in
+  while !wait do
+    Sound.(play Music);
+    let key, _, _ = Engine.get_key () in
+    match key with
+    | '\x00' -> Unix.sleepf 0.01
+    | '\x1b' -> exit 0
+    | _ -> wait := false
+  done;
+  Sound.(stop Music)
+
+
 (* Play all levels of the game and reiterate after final screen *)
 let rec play () =
-  Render.init ();
-  at_exit Render.deinit;
+  Render.fullscreen ();
   play' ()
 
 and play' () =
@@ -214,6 +255,9 @@ and play' () =
     (try
       play_cave game cave
     with Advance n ->
+      Sound.(stop Reveal);
+      Sound.(stop (Effect Physics.MillActivity));
+      Sound.(stop (Effect Physics.AmoebaActivity));
       let level' = game.level + n in
       game.level <- (level' +  Levels.count) mod Levels.count;
       if game.level <> level' then
@@ -223,14 +267,10 @@ and play' () =
     game.score <- cave.score
   done;
 
-  Render.clear ();
-  Render.start ();
   if game.lives > 0 then
-    Render.print Yellow (3, 12) "@$ YOU BEAT IT!"
+    splash Yellow "@$ YOU BEAT IT!"
   else
-    Render.print White (6, 12) "GAME OVER";
-  Render.finish ();
-  if wait_input () = '\x1b' then exit 0;
+    splash White "GAME OVER";
 
   play' ()
 

@@ -1,4 +1,4 @@
-(* Output Window *)
+(* Backend for Graphics Library *)
 
 type window = unit
 
@@ -40,6 +40,8 @@ let start_frame () =
 
 let finish_frame () =
   Graphics.synchronize ()
+
+let is_buffered_frame = false
 
 
 (* Colors *)
@@ -93,4 +95,17 @@ let get_key () =
     key := Graphics.read_key ()
   done;
   let upper = Char.uppercase_ascii !key in
-  upper, !key = upper
+  upper, `Press, !key = upper
+
+
+(* Sound *)
+
+type audio = unit
+type sound = unit
+
+let open_audio = ignore
+let close_audio = ignore
+let load_sound = ignore
+let play_sound () = ignore
+let stop_sound () = ignore
+let is_playing_sound () _ = false

@@ -1,4 +1,4 @@
-(* Graphics and rendering backend *)
+(* Graphics and Rendering *)
 
 module Make (_ : Engine.S) :
 sig
@@ -8,12 +8,6 @@ sig
    type grid_pos = int * int
    (** Represents a position in the cave map,
       or the character matrix of the info area. *)
-
-   val init : unit -> unit
-   (** Initializes the graphics backend. *)
-
-   val deinit : unit -> unit
-   (** Terminates the graphics backend. *)
 
    val clear : unit -> unit
    (** Clears the graphics window. *)

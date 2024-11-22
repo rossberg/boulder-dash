@@ -1,23 +1,40 @@
+### To Do
+
+- Better Bonus Life animation
+- Reorg sprites
+- Reorg assets; adjust nix
+- Joystick support
+- BD2 levels
+
+
 # OCaml Boulder Dash
 
 [Boulder Dash](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) was my favourite computer game in the 8-bit era, first released on the Atari 400/800 in 1984. Though I never owned an 8-bit machine myself, I had friends that I annoyed enough to let me play it on theirs.
 
-This is a homage to its 40th anniversary in form of a fairly faithful clone of the original game, implemented in just a few 100 lines of bare OCaml, with nothing but the homely [Graphics](https://github.com/ocaml/graphics) library. It should run on Windows, Mac, and Linux, though I was too lazy to test the latter.
+This is a homage to its 40th anniversary in form of a fairly faithful clone of the original game, implemented in just a few 100 lines of OCaml.
 
-Alternatively, it can be built with either the [TSDL](https://github.com/dbuenzli/tsdl) (Thin [SDL](https://www.libsdl.org)) binding for OCaml, or with [OCaml Raylib](https://github.com/tjammer/raylib-ocaml), the OCaml binding to the simple [Raylib](https://www.raylib.com/) game engine. Both give a better user experience, for the price of a harder build experience.
+Version 2 also was an excuse to play with the OCaml bindings to popular graphics engines, and hence, it comes with 3 possible backends:
+
+1. the homely bare OCaml [Graphics](https://github.com/ocaml/graphics) library,
+2. the [TSDL](https://github.com/dbuenzli/tsdl) binding to the [SDL](https://www.libsdl.org) API,
+3. the [Raylib](https://github.com/tjammer/raylib-ocaml) binding to the [Raylib](https://www.raylib.com/) game engine.
+
+The above is in order of increasingly better user experience, for the price of a harder build experience. Some unfortunate [limitations](#limitations) apply to the Graphics library option in particular.
+
+All should in principle run on Windows, Mac, and Linux, though I was too lazy to test all combinations.
 
 
 ### Features
 
-* Faithful original physics, graphics, and animations
-* Authentic scrolling mechanics combined with dynamic window resizing and rescaling
-* All 20 levels and 5 difficulties
+* Faithful original physics, graphics, animations, sound, and music
+* Authentic scrolling mechanics combined with dynamic resizing
+* All 40 levels and 5 difficulties of Boulder Dash 1 & 2
 * Pause-and-go mode for relaxed playing
-
-The game engine can also handle the features from Boulder Dash 2, namely Expanding Walls and Slime, but currently includes no levels that use them.
 
 
 ### Building
+
+There are 3 possible backends, resulting in 3 ways to build the program.
 
 #### The Graphics build
 
@@ -39,7 +56,6 @@ When the graphics didn't work out of the box (e.g., the window cannot be opened 
 
 If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you, can build and run this version with `nix run github:rossberg/boulder-dash?dir=nix`
 
-
 #### The TDSL build
 
 To build a version of the game using the TSDL library, invoke
@@ -54,7 +70,6 @@ make tsdl
 Prerequisites:
 
 - the TSDL library (`opam install tsdl`)
-
 
 #### The Raylib version
 
@@ -108,7 +123,36 @@ Beyond that, Boulder Dash is mostly a self-explanatory game. Figuring out the me
 Oh, and if you don't like the size of the sprites, you can scale the whole image by passing `--scale <int>` on the command line. The default is 4 (times the original 8-bit sprite sizes, which were designed for the fancy 320x200 displays of the times). In the TSDL or Raylib build, you can of course change this dynamically using the `[` and `]` keys.
 
 
-### Limitations of the Graphics Library
+### Implementation
+
+I tried to keep the code simple. Unfortunately, it turned out fairly imperative, given the stateful nature of the game and of the graphics library.
+
+The modules are:
+
+- `Cave` - the representation of a game level
+- `Levels` - the original binary levels data with a decoder
+- `Physics` - the core game logic for transitioning a cave one tick
+- `Game` - the main game loop (functorised over engine)
+- `Render` - the graphics backend (functorised over engine)
+- `Sound` - handling of sound effects (functorised over engine)
+- `Engine` - unified signature for backend engines
+- `Engine_graphics` - wrapper for Graphics library
+- `Engine_tsdl` - wrapper for TSDL library
+- `Engine_raylib` - wrapper for Raylib library
+- `Bmp` - a simple decoder for .bmp files, used by Graphics binding
+- `Main` - common main module (functorised over engine)
+- `Main_graphics` - main entry point for Graphics version
+- `Main_tsdl` - main entry point for TSDL version
+- `Main_raylib` - main entry point for Raylib version
+
+Little surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
+
+
+### Limitations
+
+Each of the 3 backends has its pros and cons. Needless to say that they all sport very imperative interfaces.
+
+#### Graphics Library
 
 On one hand, I was surprised and thrilled how easy it was to use the Graphics library, and how far I was able to push it with full screen animation and scrolling. On the other, it has a few shortcomings, being the excuse for some limitations to this build of this little game:
 
@@ -126,42 +170,64 @@ On one hand, I was surprised and thrilled how easy it was to use the Graphics li
 
 - Windows: On Windows, some of the API seems defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion.
 
-All of these limitations are lifted in the TSDL and Raylib builds. I still have to implement sound, though.
+- Mac: On MacOs, the library requires X11, so you'll have to install XQuartz.
+
+Finally, because the Graphics library is much more unhurried in general, rendering has to be optimised to only update tiles that either changed or are animated. In situations where a lot is happening or the entire screen changes due to scrolling, the game tends to become less fluid.
+
+#### TSDL Library
+
+Most of what I needed could easily be done with TSDL, although it is rather low-level, so lacks certain convenience, e.g., for manipulating images. But the only real limitation revolved around its sound subsystem:
+
+- No sound mixing: Although SDL3 can freely mix multiple audio streams, TSDL currently only supports SDL2, which does not have that capability. Since I did not feel like implementing that myself, I hack around that by using all available audio devices as voices. Depending on the hardware, that could mean that some sound effects are swallowed in noisy situations.
+
+- Only .wav: In addition, SDL only supports plain wave files, so I can't deploy the sound assets as smaller MP3s without introducing additional dependencies.
+
+- Unsafe: When screwing up and using the API incorrectly, I believe I witnessed crashes in some cases, though I can't reproduce the details.
+
+#### Raylib Library
+
+Raylib is meant to be easy to use, so has more high-level functionality and is generally pleasent to use. I only ran into a couple of quirks:
+
+- Fullscreen oddities: For some reason, Raylib decides to change the resolution when going to fullscreen, at least on Mac. And the one it picks isn't even a natural one for the screen. I had to work around this by adapting the current graphics scaling to the new resolution.
+
+- Key bindings: For unknown reasons, Raylib's of cooked key press events is very unreliable, at least when doing direct key code checking at the same time. It swallows, like, more than half the key presses. Although this approach works fine for TSDL, I had to abandon it for Raylib. As a result, some of the game's meta controls will be mapped incorrectly for folks daring to not use an English keyboard.
+
+- Unsafe: Its imperative interface does not prevent you from trying things like creating a texture before opening a window, which it doesn't like much and will respond to with a crash.
 
 
-### Implementation
+### Change History
 
-I tried to keep the code simple. Unfortunately, it turned out fairly imperative, given the stateful nature of the game and of the graphics library.
+Version 2 adds the following niceties:
 
-The modules are:
-
-- `Cave` - the representation of a game level
-- `Step` - the core game logic for transitioning a cave one tick
-- `Levels` - the original binary levels data with a decoder
-- `Game` - the main game loop (functorised over engine)
-- `Render` - the graphics backend (functorised over engine)
-- `Engine` - unified signature for backend engines
-- `Engine_graphics` - wrapper for Graphics library
-- `Engine_tsdl` - wrapper for TSDL library
-- `Engine_raylib` - wrapper for Raylib library
-- `Bmp` - a simple decoder for .bmp files, used by Graphics binding
-- `Main` - common main module (functorised over engine)
-- `Main_graphics` - main entry point for Graphics version
-- `Main_tsdl` - main entry point for TSDL version
-- `Main_raylib` - main entry point for Raylib version
-
-Little surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
+- All Boulder Dash 2 levels
+- Support for SDL and Raylib engines
+- Original sound effects and music
+- Original level color schemes
+- Full screen mode
+- Dynamic scaling adjustment
+- Precise keyboard controls and control via arrow keys
+- Instant start-up
 
 
-### Acknowledgements
+### Acknowledgements and Resources
 
 * Peter Liepa and Chris Gray for making the [original](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) [game](https://boulder-dash.com/retro-gamer-magazine/).
 
 * Peter Broadribb for various [documents](https://www.elmerproductions.com/sp/peterb/) reverse-engineering internals of the original.
 
-* Martijn Mooij for the [Boulder Dash Fan site](http://www.bd-fans.com/) hosting lots of material (defunct, [mirror](https://www.artsoft.org/rocksndiamonds/levels/martijnmooij/2012-11-07/www.bd-fans.com/index.html)).
+* Martijn Mooij for the old [Boulder Dash Fan site](http://www.bd-fans.com/) hosting lots of material (defunct, [mirror](https://www.artsoft.org/rocksndiamonds/levels/martijnmooij/2012-11-07/www.bd-fans.com/index.html)).
 
-* Jake Gordon for his [JavaScript Boulder Dash](https://codeincomplete.com/articles/javascript-boulderdash/), which inspired me to do the same in a civilised programming language and with some improvements (more faithful physics, difficulty levels, scrolling, reveal animation, ...).
+* Jake Gordon for his [JavaScript Boulder Dash](https://codeincomplete.com/articles/javascript-boulderdash/), which inspired me to do the same in a civilised programming language.
+
+* Marek Roth for the [Boulder Dash Inside FAQ](http://www.gratissaugen.de/erbsen/BD-Inside-FAQ.html), which has all the details on the cave encodings of all relevant BD versions.
+
+* Arno Weber for the [Boulder Dash Fansite](https://www.boulder-dash.nl), which has yet more material and an (active!) [forum](http://www.boulder-dash.nl/forum/).
+
+* Stephen Hewitt for a [Boulder Dash Disassembly](http://www.retrointernals.org/boulder-dash/boulder-dash-disassembly).
+
+* Dr Honz for the [Boulder Dashes ReM](csdb.dk/release/?id=145094), the complete reverse engineered source code of BD1, BD2, and BDCK.
+
+* Czirkos Zoltan for the [GDash](https://github.com/meonwax/gdash) clone, from which I took the original's sound samples.
 
 * "Boulder Dash" today is a trademark of [BBG Entertainment](https://boulder-dash.com/), after being owned by [First Star Software](https://en.wikipedia.org/wiki/First_Star_Software) until 2018.
 

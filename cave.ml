@@ -45,7 +45,7 @@ type rockford =
 
 type cave =
 {
-  name : char;
+  name : string;  (* 2 characters only *)
   difficulty : int;
   intermission : bool;
   speed : float;  (* turns per second *)

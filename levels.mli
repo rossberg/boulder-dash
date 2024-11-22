@@ -1,3 +1,5 @@
+(* Level Data *)
+
 type color = int * int * int
 
 val level : int -> int -> Cave.cave * (color * color * color)

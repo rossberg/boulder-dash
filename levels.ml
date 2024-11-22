@@ -4,6 +4,7 @@
 
 let data =
 [|
+  (* Boulder Dash 1 *)
   (* A *)
   "\x01\x14\x0A\x0F\x0A\x0B\x0C\x0D\x0E\x0C\x0C\x0C\x0C\x0C\x96\x6E" ^
   "\x46\x28\x1E\x08\x0B\x09\xD4\x20\x00\x10\x14\x00\x3C\x32\x09\x00" ^
@@ -156,6 +157,20 @@ let data =
   "\x87\x00\x02\x28\x16\x07\x87\x00\x02\x14\x0C\x01\xD0\x0B\x03\x03" ^
   "\x02\x80\x0B\x07\x03\x06\x00\x43\x0B\x06\x03\x02\x43\x0B\x0A\x03" ^
   "\x02\x50\x08\x07\x03\x03\x25\x03\x03\x04\x09\x0A\xFF";
+
+  (* Boulder Dash 2 *)
+  (* E *)
+  "\x02\x14\x28\x1e\x1e\x1e\x1e\x1e\x05\x08\x0a\x0a\x0a\x1e\x1f\x20" ^
+  "\x21\x22\xff\x7f\x00\x00\x10\x14\x00\x00" ^
+  "\x02\x00\x07\x01\x0e\x26\x00" ^
+  "\x02\x01\x01\x14\x14\x13\x01" ^
+  "\x04\x3e\x05\x01\x03\x13\x02\x01" ^
+  "\x00\x3e\x12\x01\x04\x13" ^
+  "\x07\xe0" ^
+  "\x00\x03\x14\x01\x04\x13" ^
+  "\x03\x25\x11\x03" ^
+  "\x03\x04\x12\x23" ^
+  "\xff";
 |]
 
 type color = int * int * int
@@ -215,26 +230,31 @@ let random (seed1, seed2) =
 
 let count = Array.length data
 
+(*
+ * http://www.gratissaugen.de/erbsen/BD-Inside-FAQ.html
+ *)
 let level i difficulty =
   let s = data.(i) in
   let data = Array.init (String.length s) (fun i -> Char.code s.[i]) in
+  let bd1 = i < 20 in
 
-  let mill_time = float_of_int data.(0x01) in
-  let amoeba_time = float_of_int data.(0x01) in
-  let value = data.(0x02) in
-  let extra = data.(0x03) in
-  let seeds = ref 0, ref data.(0x04 + difficulty - 1) in
-  let needed = data.(0x09 + difficulty - 1) in
-  let time = float_of_int (data.(0x0e + difficulty - 1)) in
-  let color1 = colors.(data.(0x13)) in
-  let color2 = colors.(data.(0x14)) in
-  let color3 = colors.(data.(0x15) - 8) in
-  let randoms = [|data.(0x18); data.(0x19); data.(0x1A); data.(0x1B)|] in
-  let probability = [|data.(0x1c); data.(0x1d); data.(0x1e); data.(0x1f)|] in
+  let mill_time = float_of_int data.(if bd1 then 0x01 else 0x00) in
+  let amoeba_time = float_of_int data.(if bd1 then 0x01 else 0x00) in
+  let value = data.(if bd1 then 0x02 else 0x01) in
+  let extra = data.(if bd1 then 0x03 else 0x02) in
+  let seeds = ref 0, ref data.((if bd1 then 0x04 else 0x0d) + difficulty - 1) in
+  let needed = data.((if bd1 then 0x09 else 0x08) + difficulty - 1) in
+  let time = float_of_int (data.((if bd1 then 0x0e else 0x03) + difficulty - 1)) in
+  let color1 = colors.(if bd1 then data.(0x13) else 8) in  (* TODO: hod does BD2 select colors? *)
+  let color2 = colors.(if bd1 then data.(0x14) else 11) in
+  let color3 = colors.(if bd1 then data.(0x15) - 8 else 1) in
+  let randoms = Array.init 4 (fun i -> data.((if bd1 then 0x18 else 0x16) + i)) in
+  let probability = Array.init 4 (fun i -> data.((if bd1 then 0x1c else 0x12) + i)) in
 
   (* Timings are rough estimates *)
   let intermission = (i + 1) mod 5 = 0 in
-  let name = Char.chr (if intermission then i/5 + 49 else (i + 1)*4/5 + 65) in
+  let letter = Char.chr (if intermission then i/5 + 49 else (i + 1)*4/5 + 65) in
+  let name = (if bd1 then "1" else "2") ^ String.make 1 letter in
   let speed = float (7 + difficulty + 2 * Bool.to_int intermission) in
   let width, height = if intermission then 20, 12 else 40, 22 in
   let cave = Cave.make
@@ -263,36 +283,98 @@ let level i difficulty =
       line tile x (y + i) w 1 0
     done
   in
+  let raster tile x y w h dx dy =
+    for j = 0 to h - 1 do
+      for i = 0 to w - 1 do
+        single tile (x + i*dx) (y + j*dy)
+      done
+    done
+  in
+  let delta i =
+    [| 0, -1; +1, -1; +1, 0; +1, +1; 0, +1; -1, +1; -1, 0; -1, -1|].(i)
+  in
 
-  let rec interpret i =
+  let rec interpret1 i =
     if data.(i) <> 0xff then
+    let code = data.(i) lsr 6 in
     let tile = tiles (data.(i) land 0x3f) in
     let x = data.(i + 1) in
     let y = data.(i + 2) - 2 in
-    match data.(i) lsr 6 with
+    match code with
     | 0 ->
       single tile x y;
-      interpret (i + 3)
+      interpret1 (i + 3)
     | 1 ->
       let len = data.(i + 3) in
       let dir = data.(i + 4) in
-      let dx, dy =
-        [| 0, -1; +1, -1; +1, 0; +1, +1; 0, +1; -1, +1; -1, 0; -1, -1|].(dir) in
+      let dx, dy = delta dir in
       line tile x y len dx dy;
-      interpret (i + 5)
+      interpret1 (i + 5)
     | 2 ->
       let w = data.(i + 3) in
       let h = data.(i + 4) in
       let filler = tiles data.(i + 5) in
       rect tile x y w h;
       fill filler (x + 1) (y + 1) (w - 2) (h - 2);
-      interpret (i + 6)
+      interpret1 (i + 6)
     | 3 ->
       let w = data.(i + 3) in
       let h = data.(i + 4) in
       rect tile x y w h;
-      interpret (i + 5)
-    | _ -> failwith "Levels.interpret"
+      interpret1 (i + 5)
+    | _ -> failwith "Levels.interpret1"
+  in
+
+  let rec interpret2 i =
+    if data.(i) <> 0xff then
+    let code = data.(i) in
+    let tile = if code <= 6 then tiles (data.(i + 1)) else Space in
+    let y = if code <= 4 then data.(i + 2) else -1 in
+    let x = if code <= 4 then data.(i + 3) else -1 in
+    match code with
+    | 0 ->
+      let dir = data.(i + 4) lsr 1 in
+      let len = data.(i + 5) in
+      let dx, dy = delta dir in
+      line tile x y len dx dy;
+      interpret2 (i + 6)
+    | 1 ->
+      let h = data.(i + 4) in
+      let w = data.(i + 5) in
+      rect tile x y w h;
+      interpret2 (i + 6)
+    | 2 ->
+      let h = data.(i + 4) in
+      let w = data.(i + 5) in
+      let filler = tiles data.(i + 6) in
+      rect tile x y w h;
+      fill filler (x + 1) (y + 1) (w - 2) (h - 2);
+      interpret2 (i + 7)
+    | 3 ->
+      single tile x y;
+      interpret2 (i + 4)
+    | 4 ->
+      let h = data.(i + 4) in
+      let w = data.(i + 5) in
+      let dy = data.(i + 6) in
+      let dx = data.(i + 7) in
+      raster tile x y w h dx dy;
+      interpret2 (i + 8)
+    | 6 ->
+      let tile' = tiles data.(i + 2) in
+      let d = data.(i + 3) in
+      for y = 0 to height - 1 do
+        for x = 0 to width - 1 do
+          if cave.map.(y).(x).tile = tile then
+            single tile' ((x + d) mod width) (y + (x + d) / width)
+        done
+      done;
+      interpret2 (i + 4)
+    | 7 ->
+      let _permeability = data.(i + 1) in
+      (* TODO *)
+      interpret2 (i + 2)
+    | _ -> failwith "Levels.interpret2"
   in
 
   for y = 1 to height - 2 do
@@ -306,6 +388,6 @@ let level i difficulty =
     done
   done;
   rect Cave.Steel 0 0 width height;
-  interpret 0x20;
+  if bd1 then interpret1 0x20 else interpret2 0x1a;
 
   cave, (color1, color2, color3)

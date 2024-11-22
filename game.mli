@@ -1,4 +1,4 @@
-(* Main game loop *)
+(* Main Game Loop *)
 
 module Make (_ : Engine.S) :
 sig
