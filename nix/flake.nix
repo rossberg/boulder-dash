@@ -15,7 +15,7 @@
 
         packages.default = pkgs.ocamlPackages.buildDunePackage {
           pname = "boulderdash";
-          version = "1.0.0";
+          version = "1.0.1";
           src = ../.;
           buildInputs = [ pkgs.ocamlPackages.graphics ];
 
