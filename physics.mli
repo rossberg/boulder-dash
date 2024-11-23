@@ -1,5 +1,6 @@
 (* Core game logic *)
 
+(** Events that might cause sound effects *)
 type event =
   | BoulderBump
   | DiamondBump

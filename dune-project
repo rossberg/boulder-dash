@@ -9,6 +9,7 @@
 (package
   (name boulder_dash)
   (synopsis "Boulder Dash")
-  (description "A clone of the classic Boulder Dash game")
-  (depends ocaml dune graphics)
+  (description "A faithful clone of the classic Boulder Dash game")
+  (depends ocaml dune)
+  (depopts graphics tsdl raylib)
 )

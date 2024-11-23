@@ -3,16 +3,16 @@ default: graphics
 all: graphics tsdl raylib
 
 graphics:
-	dune build main_$@.exe
-	ln -sf _build/default/main_$@.exe boulderdash.exe
+	dune build engine-$@/main_$@.exe
+	ln -sf _build/default/engine-$@/main_$@.exe boulderdash.exe
 
 tsdl:
-	dune build main_$@.exe
-	ln -sf _build/default/main_$@.exe boulderdash.exe
+	dune build engine-$@/main_$@.exe
+	ln -sf _build/default/engine-$@/main_$@.exe boulderdash.exe
 
 raylib:
-	dune build main_$@.exe
-	ln -sf _build/default/main_$@.exe boulderdash.exe
+	dune build engine-$@/main_$@.exe
+	ln -sf _build/default/engine-$@/main_$@.exe boulderdash.exe
 
 clean:
 	dune clean

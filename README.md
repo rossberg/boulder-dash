@@ -2,10 +2,8 @@
 
 - Better Bonus Life animation
 - Reorg sprites
-- Reorg assets; adjust nix
 - Joystick support
 - BD2 levels
-- Remove old Raylib keyboard code
 
 
 # OCaml Boulder Dash
@@ -22,7 +20,7 @@ Version 2 also was an excuse to play with the OCaml bindings to popular graphics
 
 The above is in order of increasingly better user experience, for the price of a harder build experience. Some unfortunate [limitations](#limitations) apply to the Graphics library option in particular.
 
-All should in principle run on Windows, Mac, and Linux, though I was too lazy to test all combinations.
+In theory, all versions should run on Windows, Mac, and Linux, though I was too lazy to test all combinations, and had trouble installing some of the dependencies on some of the systems.
 
 
 ### Features
@@ -136,15 +134,11 @@ The modules are:
 - `Game` - the main game loop (functorised over engine)
 - `Render` - the graphics backend (functorised over engine)
 - `Sound` - handling of sound effects (functorised over engine)
-- `Engine` - unified signature for backend engines
-- `Engine_graphics` - wrapper for Graphics library
-- `Engine_tsdl` - wrapper for TSDL library
-- `Engine_raylib` - wrapper for Raylib library
-- `Bmp` - a simple decoder for .bmp files, used by Graphics binding
 - `Main` - common main module (functorised over engine)
-- `Main_graphics` - main entry point for Graphics version
-- `Main_tsdl` - main entry point for TSDL version
-- `Main_raylib` - main entry point for Raylib version
+- `Engine` - unified signature for backend engines
+- `engine-*/Engine_{graphics,tsdl,raylib}` - wrapper for respective backend library
+- `main-*/Main_{graphics,tsdl,raylib}` - main entry point for respective build
+- `engine-graphics/Bmp` - a simple decoder for .bmp files
 
 Little surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
 
@@ -155,7 +149,9 @@ Each of the 3 backends has its pros and cons. Needless to say that they all spor
 
 #### Graphics Library
 
-On one hand, I was surprised and thrilled how easy it was to use the Graphics library, and how far I was able to push it with full screen animation and scrolling. On the other, it has a few shortcomings, being the excuse for some limitations to this build of this little game:
+On one hand, I was surprised and thrilled how easy it was to use the Graphics library, and how far I was able to push it with full screen animation and scrolling. I love that it has no external dependencies, making it much less of a headache to build than the alternatives.
+
+On the other, it has a few shortcomings, being the excuse for some limitations to this build of this little game:
 
 - Controls: Keyboard only and a bit sluggish, since the library only offers buffered keyboard input, no direct key events. For the best experience, set your system's key repeat *rate* to max and key repeat *delay* to zero. Also, cursor keys cannot be recognised, so you're stuck with WASD.
 

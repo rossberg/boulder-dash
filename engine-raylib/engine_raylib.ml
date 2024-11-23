@@ -87,6 +87,7 @@ let can_scale_image = true
 
 (* Keyboard *)
 
+(*
 let keys = let open Raylib.Key in
 [
   (* Ordered such that horizontal movement takes precedence *)
@@ -106,7 +107,6 @@ let get_key () =
   let char = ref (Uchar.of_int 1) in
   while !char <> Uchar.of_int 0 do
     char := Raylib.get_char_pressed ();
-(
     if !char <> Uchar.of_int 0 then
       cooked := try Uchar.to_char !char with _ -> '\x00'
 );Printf.printf "[pressed `%c`]\n%!" !cooked
@@ -120,12 +120,11 @@ let get_key () =
   in
   let rep = if key = !last then `Repeat else `Press in
   last := key;
-Printf.printf "[key `%c`]\n%!" key;
   key, rep, shift
+*)
 
-
-(*
-(* Raylib doesn't tell us key codes for scan codes, so we special-case *)
+(* Raylib.is_key_down seems to interfer with .get_char_pressed, so we can't use the
+ * latter. Special-case all relevant keys instead and forgot about keymaps. *)
 let keys = let open Raylib.Key in
 [
   (* Ordered such that horizontal movement takes precedence *)
@@ -154,7 +153,6 @@ let get_key () =
   let rep = if key = !last then `Repeat else `Press in
   last := key;
   key, rep, shift
-*)
 
 
 (* Sound *)

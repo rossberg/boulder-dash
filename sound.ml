@@ -15,7 +15,9 @@ struct
   let audio = Engine.open_audio ()
   let _ = at_exit (fun () -> Engine.close_audio audio)
 
-  let load name = Engine.load_sound (Filename.concat "assets" name ^ ".wav")
+  let load name =
+    let (/) = Filename.concat in
+    Engine.load_sound (Filename.dirname Sys.argv.(0) / "assets" / name ^ ".wav")
 
   let music = load "music"
   let reveal = load "reveal"

@@ -86,7 +86,8 @@ let fullscreen () =
 (* Initialise Tiles *)
 
 let bmp =
-  Engine.load_image Filename.(concat (dirname Sys.argv.(0)) "sprites.bmp")
+  let (/) = Filename.concat in
+  Engine.load_image (Filename.dirname Sys.argv.(0) / "assets" / "sprites.bmp")
 
 type tile = {raw : Engine.raw_image; mutable prepared : Engine.prepared_image}
 
