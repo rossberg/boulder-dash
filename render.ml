@@ -101,42 +101,42 @@ let tile y x =
   all_tiles := tile :: !all_tiles;
   tile
 
-let animation y x n m = Array.init (n * m) (fun i -> tile y (x + i/m))
+let animation y x n hold = Array.init (n * hold) (fun i -> tile y (x + i/hold))
 
 let character y x =
   Engine.extract_image bmp (letter_w * x) (letter_h * y) letter_w letter_h
 
 let alphabet = Array.init 256 (fun i ->
-  if i < 32 || i >= 96 then character 0 0 else character (i/16 - 2) (i mod 16))
+  if i < 32 || i >= 96 then character 0 0 else character (i/8 - 4) (i mod 8))
 
 let alphabet' = Array.map (fun img -> Engine.recolor_image img white yellow) alphabet
 
 let alphabet_white = Array.map (Engine.prepare_image win !scale) alphabet
 let alphabet_yellow = Array.map (Engine.prepare_image win !scale) alphabet'
 
-let space = animation 2 0 1 1
-let dirt = animation 2 1 1 1
-let boulder = animation 2 2 1 1
-let exit = animation 2 3 2 4
-let steel = animation 2 4 1 1
-let concealed = animation 2 4 4 1
-let wall = animation 2 8 1 1
-let mill = animation 2 9 4 1
-let flickers = animation 2 13 2 1
-let entry = animation 3 0 4 1  let _ = entry.(0) <- (animation 6 0 1 1).(0)
-let explosion_space = animation 3 0 4 1
-let explosion_diamond = animation 3 4 4 1
-let diamond = animation 3 8 8 1
-let firefly = animation 4 0 8 1
-let butterfly = animation 4 8 8 1
-let amoeba = animation 5 0 8 1
-let slime = animation 5 8 8 1
-let rockford_still = animation 6 0 8 1
-let rockford_blink = animation 6 8 8 1
-let rockford_tap = animation 7 0 8 1
-let rockford_blink_tap = animation 7 8 8 1
-let rockford_left = animation 8 0 8 1
-let rockford_right = animation 8 8 8 1
+let space = animation 4 0 1 1
+let dirt = animation 4 1 1 1
+let boulder = animation 4 2 1 1
+let exit = animation 4 3 2 4
+let steel = animation 4 4 1 1
+let concealed = animation 4 4 4 1
+let wall = animation 5 0 1 1
+let mill = animation 5 1 4 1
+let entry = animation 6 0 4 1  let _ = entry.(0) <- (animation 5 6 1 1).(0)
+let explosion_space = animation 6 0 4 1
+let explosion_diamond = animation 6 4 4 1
+let diamond = animation 7 0 8 1
+let firefly = animation 8 0 8 1
+let butterfly = animation 9 0 8 1
+let amoeba = animation 10 0 8 1
+let slime = animation 11 0 8 1
+let rockford_still = animation 5 6 1 1
+let rockford_blink = animation 12 0 8 1
+let rockford_tap = animation 13 0 8 1
+let rockford_blink_tap = animation 14 0 8 1
+let rockford_left = animation 15 0 8 1
+let rockford_right = animation 16 0 8 1
+let flickers = Array.init 8 (fun i -> animation 17 i 1 1)
 
 
 (* Color Changes *)
@@ -160,7 +160,7 @@ let recolor ((r1, g1, b1), (r2, g2, b2), (r3, g3, b3)) =
 (* Tile Rendering *)
 
 let animation = function
-  | Cave.Space -> if !flickering > 0 then flickers else space
+  | Cave.Space -> if !flickering > 0 then flickers.(Random.int 8) else space
   | Dirt -> dirt
   | Steel -> steel
   | Wall -> wall

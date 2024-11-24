@@ -1,9 +1,7 @@
 ### To Do
 
-- Better Bonus Life animation
-- Reorg sprites
-- Joystick support
 - BD2 levels
+- Joystick support
 
 
 # OCaml Boulder Dash
