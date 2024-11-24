@@ -58,6 +58,7 @@ let input game (cave : Cave.cave) key rep : bool =
   | '\b' -> raise (Advance (-1))
   | '+' -> raise (Advance (+Levels.count))
   | '-' -> raise (Advance (-Levels.count))
+  | '/' -> raise (Advance (+Levels.count/2))
   | '[' -> Render.rescale (-1)
   | ']' -> Render.rescale (+1)
   | 'F' -> Render.fullscreen ()
@@ -127,13 +128,13 @@ let render game cave frame revealed =
   )
   else
   (
-    Render.print White (0, 0) (fmt "%s/%d " cave.name cave.difficulty);
+    Render.print White (0, 0) (fmt "%c/%d " cave.name.[1] cave.difficulty);
     let n = cave.needed - cave.diamonds in
     let s, v = if n > 0 then fmt "%02d" n, cave.value else "$$", cave.extra in
-    Render.print Yellow (5, 0) s;
-    Render.print White (7, 0) (fmt "$%02d " v);
-    Render.print Yellow (11, 0) (fmt "%03.0f " (max 0.0 (cave.time +. 0.49)));
-    Render.print White (15, 0) (fmt "%05d" cave.score);
+    Render.print Yellow (4, 0) s;
+    Render.print White (6, 0) (fmt "$%02d " v);
+    Render.print Yellow (10, 0) (fmt "%03.0f " (max 0.0 (cave.time +. 0.49)));
+    Render.print White (14, 0) (fmt "%06d" cave.score);
   );
 
   (* Pause indicator *)

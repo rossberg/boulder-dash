@@ -134,7 +134,7 @@ let keys = let open Raylib.Key in
   K, 'K'; U, 'U'; O, 'O'; P, 'P';
   Space, ' '; Enter, '\r'; Kp_enter, '\r';
   Tab, '\t'; Backspace, '\b'; Escape, '\x1b';
-  Minus, '-'; Equal, '+';
+  Minus, '-'; Equal, '+'; Slash, '/';
   F, 'F'; Left_bracket, '['; Right_bracket, ']';
 ]
 

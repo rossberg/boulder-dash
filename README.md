@@ -1,6 +1,6 @@
 ### To Do
 
-- BD2 levels
+- Slime perm
 - Joystick support
 
 
@@ -107,6 +107,7 @@ Meta controls:
 - `TAB` - skip current level (cheater!)
 - `BACKSPACE` - go back one level (really?)
 - `+`, `-` - increase/decrease difficulty
+- `/` - advance directly to Boulder Dash 2
 - `F` - toggle full-screen mode (TSDL or Raylib engine only)
 - `[`, `]` - decrease/increase graphics scaling factor (TSDL or Raylib engine only)
 - `ESC` - quit game

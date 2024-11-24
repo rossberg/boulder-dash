@@ -117,7 +117,7 @@ let keys = let open Sdl.Scancode in  (* movement keys that don't remap *)
   a, 'A'; d, 'D'; w, 'W'; s, 'S'; x, 'X';
   space, ' '; return, '\r'; kp_enter, '\r';
   tab, '\t'; backspace, '\b'; escape, '\x1b';
-  minus, '-'; equals, '+';  (* minor convenience, no shift needed *)
+  minus, '-'; equals, '+'; slash, '/';  (* minor convenience, no shift needed *)
 ]
 
 let last = ref '\x00'
