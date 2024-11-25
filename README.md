@@ -164,7 +164,7 @@ On the other, it has a few shortcomings, being the excuse for some limitations t
 
 - No sound: The Graphics library's `sound` function is a wee bit too lame to produce proper effects, especially since it appears to be blocking.
 
-- Windows: On Windows, some of the API seems defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion.
+- Windows: On Windows, some of the API is defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion. And when the user closes the Window, we get unexpected Graphic_failure exceptions.
 
 - Mac: On MacOs, the library requires X11, so you'll have to install XQuartz.
 
