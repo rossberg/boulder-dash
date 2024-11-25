@@ -18,7 +18,7 @@ type window = Sdl.window * Sdl.renderer
 
 let open_window w h title = get_ok @@
   let* () = Sdl.init Sdl.Init.everything in
-  let* win = Sdl.create_window ~w ~h title Sdl.Window.(opengl + resizable) in
+  let* win = Sdl.create_window ~w ~h title Sdl.Window.resizable in
   let* ren = Sdl.create_renderer win ~flags: Sdl.Renderer.presentvsync in
   Sdl.start_text_input ();
   ok (win, ren)
@@ -149,8 +149,13 @@ let get_key _ =
 (* Unfortunately, TSDL does not yet support SDL3, which has audio mixing built
  * in. Hence we hack a little by using multiple audio devices. *)
 
-type sound = (int, Bigarray.int8_unsigned_elt) Sdl.bigarray
-type voice = {id : Sdl.audio_device_id; mutable playing : (sound * float) option}
+type sound = (char, Bigarray.int8_unsigned_elt) Sdl.bigarray
+type voice =
+{
+  id : Sdl.audio_device_id;
+  mutable sound : sound option;
+  mutable start : float;
+}
 type audio = voice array
 
 let audio_spec = Sdl.
@@ -169,7 +174,7 @@ let open_audio () = get_ok @@
   let rec loop i voices =
     if i = 0 then voices else
     match Sdl.open_audio_device None false audio_spec 0 with
-    | Ok (id, _) -> loop (i - 1) ({id; playing = None}::voices)
+    | Ok (id, _) -> loop (i - 1) ({id; sound = None; start = 0.0}::voices)
     | Error _ -> voices
   in
   ok (Array.of_list (loop 8 []))
@@ -180,31 +185,30 @@ let close_audio aud =
 
 let load_sound path = get_ok @@
   let* rw_ops = Sdl.rw_from_file path "r" in
-  let* _spec, wav = Sdl.load_wav_rw rw_ops audio_spec Bigarray.Int8_unsigned in
+  let* _spec, wav = Sdl.load_wav_rw rw_ops audio_spec Bigarray.Char in
   let* () = Sdl.rw_close rw_ops in
   ok wav
 
-let is_voice_playing_sound sound voice =
-  match voice.playing with
-  | Some (sound', _) -> sound == sound'
+let has_sound sound voice =
+  match voice.sound with
+  | Some sound' -> sound == sound'
   | None -> false
 
 let play_sound aud sound = get_ok @@
   let voice =
-    match Array.find_opt (is_voice_playing_sound sound) aud with
+    match Array.find_opt (has_sound sound) aud with
     | Some voice -> voice
     | None ->  (* Not currently playing, find a free or the oldest voice *)
       let voice = ref aud.(0) in
       for i = 1 to Array.length aud - 1 do
-        match !voice.playing, aud.(i).playing with
-        | None, _ -> ()
-        | _, None -> voice := aud.(i)
-        | Some (_, time1), Some (_, time2) ->
-          if time2 < time1 then voice := aud.(i)
+        if Sdl.(get_audio_device_status aud.(i).id <> Audio.playing)
+        || aud.(i).start < !voice.start then
+          voice := aud.(i)
       done;
       !voice
   in
-  voice.playing <- Some (sound, Unix.gettimeofday ());
+  voice.sound <- Some sound;
+  voice.start <- Unix.gettimeofday ();
   Sdl.pause_audio_device voice.id true;
   Sdl.clear_queued_audio voice.id;
   let* () = Sdl.queue_audio voice.id sound in
@@ -212,11 +216,14 @@ let play_sound aud sound = get_ok @@
   ok ()
 
 let stop_sound aud sound =
-  match Array.find_opt (is_voice_playing_sound sound) aud with
+  match Array.find_opt (has_sound sound) aud with
   | None -> ()
   | Some voice ->
     Sdl.pause_audio_device voice.id true;
     Sdl.clear_queued_audio voice.id
 
 let is_playing_sound aud sound =
-  Array.exists (is_voice_playing_sound sound) aud
+  Array.exists (fun voice ->
+    has_sound sound voice &&
+    Sdl.(get_audio_device_status voice.id = Audio.playing)
+  ) aud

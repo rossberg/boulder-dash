@@ -455,7 +455,7 @@ let level i difficulty =
   let width, height = if intermission then 20, 12 else 40, 22 in
   let cave = Cave.make
     width height name difficulty intermission speed needed value extra
-    time mill_time amoeba_time 8
+    time mill_time amoeba_time
   in
 
   let single tile x y =
@@ -567,8 +567,7 @@ let level i difficulty =
       done;
       interpret2 (i + 4)
     | 7 ->
-      let _permeability = data.(i + 1) in
-      (* TODO *)
+      cave.slime.permeability <- data.(i + 1);
       interpret2 (i + 2)
     | _ -> failwith "Levels.interpret2"
   in

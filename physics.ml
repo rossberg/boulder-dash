@@ -63,7 +63,6 @@ let indestructable = function  (* immune to explosions *)
 
 
 (* Step one Turn *)
-
 let step cave : event list =
   let events = ref [] in
 
@@ -103,7 +102,9 @@ let step cave : event list =
   (* Move a boulder or diamond *)
   let item pos mv alter mill bump milled =
     match mv, get (down pos) with
-    | _, Space -> move pos down (alter Falling); if mv = Resting then event bump
+    | _, Space ->
+      if mv = Resting then event bump;
+      move pos down (alter Falling)
     | _, below when rounded below ->
       if mv = Falling then event bump;
       if get (left pos) = Space && get (down (left pos)) = Space then
@@ -113,7 +114,8 @@ let step cave : event list =
       else
         set pos (alter Resting)
     | Resting, Slime ->
-      if get (down2 pos) = Space && Random.int cave.slime = 0 then
+      if get (down2 pos) = Space
+      && Random.int 256 land cave.slime.permeability = 0 then
         (move pos down2 (alter Falling); event SlimeActivity)
     | Resting, _ -> ()
     | Falling, Mill state ->

@@ -141,7 +141,7 @@ let flickers = Array.init 8 (fun i -> animation 17 i 1 1)
 
 (* Color Changes *)
 
-let tmp_color = Engine.create_color 0xff 0x00 0xd0  (* an ugly pink *)
+let tmp_color = Engine.create_color 0xff 0x00 0xd0  (* screaming pink *)
 
 let recolor ((r1, g1, b1), (r2, g2, b2), (r3, g3, b3)) =
   let color1' = Engine.create_color r1 g1 b1 in

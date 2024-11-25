@@ -1,6 +1,5 @@
 ### To Do
 
-- Slime perm
 - Joystick support
 
 

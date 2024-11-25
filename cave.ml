@@ -34,6 +34,7 @@ type cell = {mutable tile : tile; mutable turn : int}
 type map = cell array array
 
 type mill = {mutable time : float; mutable active : bool}
+type slime = {mutable permeability : int}
 type amoeba = {mutable time : float; mutable size : int; mutable enclosed : bool}
 type rockford =
 {
@@ -52,13 +53,13 @@ type cave =
   needed : int;
   value : int;
   extra : int;
-  slime : int;
   map : map;
   mutable turn : int;
   mutable time : float; (* seconds *)
   mutable score : int;
   mutable diamonds : int;
   mutable mill : mill;
+  mutable slime : slime;
   mutable amoeba : amoeba;
   mutable amoeba' : amoeba;
   mutable rockford : rockford;
@@ -68,18 +69,20 @@ type cave =
 (* Constructor *)
 
 let make w h name difficulty intermission speed needed value extra
-    time mill_time amoeba_time slime =
+    time mill_time amoeba_time =
   let map =
     Array.init h (fun _ -> Array.init w (fun _ -> {tile = Space; turn = 0})) in
   let mill =
     {time = mill_time; active = false} in
+  let slime =
+    {permeability = 0} in
   let amoeba =
     {time = amoeba_time; size = 0; enclosed = false} in
   let rockford =
     {face = None; reach = false; presence = Arriving; pos = w/2, h/2} in
-  { name; difficulty; intermission; speed; needed; value; extra; time; slime;
+  { name; difficulty; intermission; speed; needed; value; extra; time;
     turn = 0; score = 0; diamonds = 0;
-    map; mill; amoeba; amoeba'= amoeba; rockford
+    map; mill; slime; amoeba; amoeba'= amoeba; rockford
   }
 
 
