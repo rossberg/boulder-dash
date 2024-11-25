@@ -1,4 +1,4 @@
-(lang dune 3.2)
+(lang dune 3.5)
 
 (name boulder_dash)
 (authors "Andreas Rossberg")

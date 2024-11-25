@@ -83,7 +83,7 @@ On one hand, I was surprised and thrilled how easy it was to use the Graphics li
 
 - No sound: The Graphics library's `sound` function is a wee bit too lame to produce proper effects, especially since it appears to be blocking.
 
-- Windows: On Windows, some of the API seems defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion.
+- Windows: On Windows, some of the API is defunct, e.g., setting the window size or text size has no effect. Some draw commands are randomly ignored on occasion. And when the user closes the Window, we get unexpected Graphic_failure exceptions.
 
 When I have time and leisure, I may consider porting the program to a more real graphics engine.
 
