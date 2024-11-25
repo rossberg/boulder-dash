@@ -5,7 +5,7 @@ type window = unit
 let open_window w h title =
   Raylib.(set_trace_log_level TraceLogLevel.Error);
   Raylib.init_window w h title;
-  Raylib.(set_window_state [ConfigFlags.Window_resizable]);
+  Raylib.(set_window_state ConfigFlags.[Window_resizable; Vsync_hint]);
   Raylib.clear_background Raylib.Color.black;
   Raylib.init_audio_device ()
 
@@ -38,7 +38,7 @@ let clear_window () color =
   Raylib.clear_background color;
   Raylib.end_drawing ()
 
-let fullscreen_window = Raylib.toggle_fullscreen
+let fullscreen_window = Raylib.toggle_borderless_windowed
 
 
 (* Animation Frames *)
@@ -96,6 +96,7 @@ let n = Raylib.get_gamepad_axis_count 0 in
 Printf.printf "[`%s`: %d axes]\n%!" s n;
     Some 0
   else
+let _ = Printf.printf "[no gamepad]\n%!" in
     None
 
 let close_control _control = ()

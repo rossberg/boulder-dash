@@ -221,7 +221,7 @@ let play_cave game cave =
     if cave.amoeba.size = 0 then Sound.(stop (Effect Physics.AmoebaActivity));
 
     let pause = min (turn_time -. !turn_lag) (frame_time -. !frame_lag) in
-    Unix.sleepf (max 0.0 pause)
+    Unix.sleepf (max 0.001 pause)
   done
 
 
@@ -236,11 +236,11 @@ let splash color text =
   let wait = ref true in
   while !wait do
     Sound.(play Music);
-    let key, _, _ = Engine.get_key control in
+    let key, press, _ = Engine.get_key control in
     match key with
     | '\x00' -> Unix.sleepf 0.01
     | '\x1b' -> exit 0
-    | _ -> wait := false
+    | _ -> wait := press <> `Press
   done;
   Sound.(stop Music)
 

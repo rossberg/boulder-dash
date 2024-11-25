@@ -41,8 +41,8 @@ let clear_window (_, ren) (r, g, b) = get_ok @@
 
 let fullscreen_window (win, _) = get_ok @@
   let flags = Sdl.get_window_flags win in
-  let flags' =
-    Sdl.Window.(if test flags fullscreen then windowed else fullscreen) in
+  let flags' = Sdl.Window.(
+    if test flags fullscreen_desktop then windowed else fullscreen_desktop) in
   let* () = Sdl.set_window_fullscreen win flags' in
   ok ()
 

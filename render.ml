@@ -72,12 +72,12 @@ let rescale delta =
   dirty := true
 
 let fullscreen () =
-  let old_w = Engine.width_window win in
+  let old_h = Engine.height_window win in
   Engine.fullscreen_window win;
-  let new_w = Engine.width_window win in
+  let new_h = Engine.height_window win in
   let new_scale =
     if !old_scale <> -1 then !old_scale else
-    !scale * new_w / old_w  (* adjust for resolution change *)
+    !scale * new_h / old_h  (* adjust for resolution change *)
   in
   old_scale := !scale;
   rescale (new_scale - !scale)

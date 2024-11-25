@@ -41,7 +41,7 @@ let start_frame () =
 let finish_frame () =
   Graphics.synchronize ()
 
-let is_buffered_frame = false
+let is_buffered_frame = false  (* we use remember mode *)
 
 
 (* Colors *)
