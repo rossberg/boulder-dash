@@ -108,7 +108,26 @@ let draw_image (_, ren) img x y scale = get_ok @@
 let can_scale_image = true
 
 
-(* Keyboard *)
+(* Controls *)
+
+type control = Sdl.joystick option
+
+let open_control () = get_ok @@
+  let* n = Sdl.num_joysticks () in
+Printf.printf "[%d joysticks]\n%!" n;
+  if n = 0 then
+    ok None
+  else
+    let* joystick = Sdl.joystick_open 0 in
+let* s = Sdl.joystick_name joystick in
+let* na = Sdl.joystick_num_axes joystick in
+let* nb = Sdl.joystick_num_buttons joystick in
+Printf.printf "[`%s`: %d axes %d buttons]\n%!" s na nb;
+    ok (Some joystick)
+
+let close_control control =
+  Option.iter Sdl.joystick_close control
+
 
 let keys = let open Sdl.Scancode in  (* movement keys that don't remap *)
 [
@@ -120,9 +139,9 @@ let keys = let open Sdl.Scancode in  (* movement keys that don't remap *)
   minus, '-'; equals, '+'; slash, '/';  (* minor convenience, no shift needed *)
 ]
 
-let last = ref '\x00'
+let last_key = ref '\x00'
 
-let get_key _ =
+let get_key _control =
   let cooked = ref '\x00' in
   let event = Sdl.Event.create () in
   while Sdl.poll_event (Some event) do
@@ -139,9 +158,23 @@ let get_key _ =
     | Some (_, char) -> char
     | None -> Char.uppercase_ascii !cooked  (* cooked input for meta controls *)
   in
-  let rep = if key = !last then `Repeat else `Press in
-  last := key;
+  let rep = if key = !last_key then `Repeat else `Press in
+  last_key := key;
   key, rep, shift
+
+
+let get_axis joystick axis =
+  let i = Sdl.joystick_get_axis joystick axis in
+  if i < -8000 then -1 else if i > +8000 then +1 else 0
+
+let get_joy = function
+  | None -> 0, 0, false
+  | Some joystick ->
+    let dx = get_axis joystick 0 in
+    let dy = get_axis joystick 1 in
+    let button = Sdl.joystick_get_button joystick 0 = 1 in
+Printf.printf "[joy %+d %+d %b]\n%!" dx dy button;
+    dx, dy, button
 
 
 (* Sound *)

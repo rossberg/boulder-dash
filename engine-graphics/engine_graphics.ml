@@ -87,7 +87,12 @@ let draw_image () img x y scale =
 let can_scale_image = false
 
 
-(* Keyboard *)
+(* Controls *)
+
+type control = unit
+
+let open_control = ignore
+let close_control = ignore
 
 let get_key () =
   let key = ref '\x00' in
@@ -96,6 +101,8 @@ let get_key () =
   done;
   let upper = Char.uppercase_ascii !key in
   upper, `Press, !key = upper
+
+let get_joy () = 0, 0, false
 
 
 (* Sound *)

@@ -85,9 +85,23 @@ let draw_image () img x y scale =
 let can_scale_image = true
 
 
-(* Keyboard *)
+(* Controls *)
 
-(*
+type control = int option
+
+let open_control () =
+  if Raylib.is_gamepad_available 0 then
+let s = Raylib.get_gamepad_name 0 in
+let n = Raylib.get_gamepad_axis_count 0 in
+Printf.printf "[`%s`: %d axes]\n%!" s n;
+    Some 0
+  else
+    None
+
+let close_control _control = ()
+
+
+(*TODO: remove
 let keys = let open Raylib.Key in
 [
   (* Ordered such that horizontal movement takes precedence *)
@@ -98,7 +112,7 @@ let keys = let open Raylib.Key in
   Minus, '-'; Equal, '+';  (* minor convenience, no shift needed *)
 ]
 
-let last = ref '\x00'
+let last_key = ref '\x00'
 
 let get_key () =
   if Raylib.window_should_close () then exit 0;
@@ -118,8 +132,8 @@ let get_key () =
     | Some (_, char) -> char
     | None -> Char.uppercase_ascii !cooked  (* cooked input for meta controls *)
   in
-  let rep = if key = !last then `Repeat else `Press in
-  last := key;
+  let rep = if key = !last_key then `Repeat else `Press in
+  last_key := key;
   key, rep, shift
 *)
 
@@ -138,9 +152,9 @@ let keys = let open Raylib.Key in
   F, 'F'; Left_bracket, '['; Right_bracket, ']';
 ]
 
-let last = ref '\x00'
+let last_key = ref '\x00'
 
-let get_key () =
+let get_key _ =
   if Raylib.window_should_close () then exit 0;
   Raylib.poll_input_events ();
   let shift =
@@ -150,9 +164,23 @@ let get_key () =
     | Some (_, char) -> char
     | None -> '\x00'
   in
-  let rep = if key = !last then `Repeat else `Press in
-  last := key;
+  let rep = if key = !last_key then `Repeat else `Press in
+  last_key := key;
   key, rep, shift
+
+
+let get_axis pad axis =
+  let v = Raylib.get_gamepad_axis_movement pad axis in
+  if v < -0.25 then -1 else if v > +0.25 then +1 else 0
+
+let get_joy = function
+  | None -> 0, 0, false
+  | Some pad ->
+    let dx = get_axis pad Raylib.GamepadAxis.Left_x in
+    let dy = get_axis pad Raylib.GamepadAxis.Left_y in
+    let button = Raylib.(is_gamepad_button_down pad GamepadButton.Left_thumb) in
+Printf.printf "[joy %+d %+d %b]\n%!" dx dy button;
+    dx, dy, button
 
 
 (* Sound *)

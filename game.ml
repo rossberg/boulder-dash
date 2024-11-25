@@ -36,6 +36,10 @@ let extra_life game =
 
 
 (* Process keyboard commands, returns true if it is forcing a step *)
+
+let control = Engine.open_control ()
+let _ = at_exit (fun () -> Engine.close_control control)
+
 let input game (cave : Cave.cave) key rep : bool =
   let step = ref false in
   (match key with
@@ -70,7 +74,7 @@ let input game (cave : Cave.cave) key rep : bool =
 
 (* Make a simulation turn *)
 let turn game (cave : Cave.cave) =
-  let key, rep, shift = Engine.get_key () in
+  let key, rep, shift = Engine.get_key control in
   cave.rockford.reach <- shift;
   if cave.rockford.presence = Present then
     cave.rockford.face <-
@@ -95,7 +99,7 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  let key, rep, _ = Engine.get_key () in
+  let key, rep, _ = Engine.get_key control in
   ignore (input game cave key rep)
 
 
@@ -232,7 +236,7 @@ let splash color text =
   let wait = ref true in
   while !wait do
     Sound.(play Music);
-    let key, _, _ = Engine.get_key () in
+    let key, _, _ = Engine.get_key control in
     match key with
     | '\x00' -> Unix.sleepf 0.01
     | '\x1b' -> exit 0

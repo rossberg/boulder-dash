@@ -82,11 +82,24 @@ sig
     than the one previously used with [prepare_image]. *)
 
 
-  (* Keyboard *)
+  (* Controls *)
 
-  val get_key : unit -> char * [`Press | `Repeat] * bool
-  (** Check input and returns respective character, '\x00' if none.
+  type control
+  (** The type of all used control devices, including keyboard. *)
+
+  val open_control : unit -> control
+  (** Initialise control devices. *)
+
+  val close_control : control -> unit
+  (** Close control devices. *)
+
+  val get_key : control -> char * [`Press | `Repeat] * bool
+  (** Checks input and returns respective character, '\x00' if none.
     The Boolean indicates the states of the fire button equivalent. *)
+
+  val get_joy : control -> int * int * bool
+  (** Checks joystick and returns x and y axis, each with values of
+    -1, 0, or +1, and the status of the fire button. *)
 
 
   (* Sound *)
@@ -98,10 +111,10 @@ sig
   (** A sound sample. *)
 
   val open_audio : unit -> audio
-  (** Initialise audio device *)
+  (** Initialise audio device. *)
 
   val close_audio : audio -> unit
-  (** Close audio device *)
+  (** Close audio device. *)
 
   val load_sound : string -> sound
   (** Load a sound from a file. *)
