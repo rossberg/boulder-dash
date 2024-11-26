@@ -3,6 +3,7 @@ struct
 
 module Render = Render.Make (Engine)
 module Sound = Sound.Make (Engine)
+module Control = Control.Make (Engine)
 
 
 (* Display Configuration *)
@@ -36,56 +37,48 @@ let extra_life game =
 
 
 (* Process keyboard commands, returns true if it is forcing a step *)
+let command game (cave : Cave.cave) input : bool =
+  if cave.rockford.presence = Present then cave.rockford.face <- None;
+  match input with
+  | None -> false
+  | Some (Control.Move (dir, act)) ->
+    if cave.rockford.presence = Present then
+    (
+      cave.rockford.face <- dir;
+      cave.rockford.reach <- act
+    ); true
+  | Some (Control.Command char) ->
+    (match char with
+    | 'P' -> game.paused <- not game.paused
+    | 'K' | ' ' | '\r' ->
+      (match cave.rockford.presence with
+      | Dead ->
+        game.lives <- game.lives - 1;
+        raise (Advance (if cave.intermission then 1 else 0))
+      | Exited when cave.time <= 0.0 -> raise (Advance 1)
+      | Present when cave.time > 0.0 -> cave.time <- 0.0
+      | _ -> ()
+      )
+    | 'U' -> cave.time <- 999.0; game.lives <- 9; Render.flicker ()
+    | 'O' -> cave.diamonds <- cave.needed
+    | '\t' -> raise (Advance (+1))
+    | '\b' -> raise (Advance (-1))
+    | '+' | '=' -> raise (Advance (+Levels.count))
+    | '-' -> raise (Advance (-Levels.count))
+    | '/' -> raise (Advance (+Levels.count/2))
+    | '[' -> Render.rescale (-1)
+    | ']' -> Render.rescale (+1)
+    | 'F' -> Render.fullscreen ()
+    | '\x1b' -> exit 0
+    | _ -> ()
+    ); char = 'K' || char = ' ' || char = '\r'
 
-let control = Engine.open_control ()
-let _ = at_exit (fun () -> Engine.close_control control)
 
-let input game (cave : Cave.cave) key rep : bool =
-  let step = ref false in
-  (match key with
-  | 'W' | 'A' | 'S' | 'D' | 'Z' | 'Q' | 'X' | '2' | '4' | '6' | '8' | '5' ->
-    step := true
-  | _ when rep = `Repeat -> ()
-  | 'K' when cave.rockford.presence = Present -> cave.time <- 0.0
-  | 'U' -> cave.time <- 999.0; game.lives <- 9; Render.flicker ()
-  | 'O' -> cave.diamonds <- cave.needed
-  | 'P' -> game.paused <- not game.paused
-  | ' ' | '\r' ->
-    (match cave.rockford.presence with
-    | Dead ->
-      game.lives <- game.lives - 1;
-      raise (Advance (if cave.intermission then 1 else 0))
-    | Exited when cave.time <= 0.0 -> raise (Advance 1)
-    | _ -> step := true
-    )
-  | '\t' -> raise (Advance (+1))
-  | '\b' -> raise (Advance (-1))
-  | '+' -> raise (Advance (+Levels.count))
-  | '-' -> raise (Advance (-Levels.count))
-  | '/' -> raise (Advance (+Levels.count/2))
-  | '[' -> Render.rescale (-1)
-  | ']' -> Render.rescale (+1)
-  | 'F' -> Render.fullscreen ()
-  | '\x1b' -> exit 0
-  | _ -> ()
-  );
-  !step
-
-
-(* Make a simulation turn *)
+(* Make a game turn *)
 let turn game (cave : Cave.cave) =
-  let key, rep, shift = Engine.get_key control in
-  cave.rockford.reach <- shift;
-  if cave.rockford.presence = Present then
-    cave.rockford.face <-
-      (match key with
-      | 'W' | 'Z' | '8' -> Some Up
-      | 'A' | 'Q' | '4' -> Some Left
-      | 'S' | '2' -> Some Down
-      | 'D' | '6' -> Some Right
-      | _ -> None
-      );
-  if input game cave key rep || not game.paused then Physics.step cave else []
+  if command game cave (Control.poll ()) || not game.paused then
+    List.map (fun ev -> Sound.Effect ev) (Physics.step cave)
+  else []
 
 
 (* Make revelation step *)
@@ -99,8 +92,8 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  let key, rep, _ = Engine.get_key control in
-  ignore (input game cave key rep)
+  ignore (command game cave (Control.poll ()));
+  [Sound.Reveal]
 
 
 (* Render an animation frame *)
@@ -182,10 +175,9 @@ let play_cave game cave =
       let old_score = cave.score in
       let sounds =
         if !reveal_count > 0 then
-          (reveal game cave reveal_count revealed; [Sound.Reveal])
+          reveal game cave reveal_count revealed
         else
-          let events = turn game cave in
-          List.map (fun ev -> Sound.Effect ev) events
+          turn game cave
       in
       if cave.score/500 > old_score/500 then extra_life game;
       if game.paused then turn_lag := 0.0;
@@ -236,11 +228,10 @@ let splash color text =
   let wait = ref true in
   while !wait do
     Sound.(play Music);
-    let key, press, _ = Engine.get_key control in
-    match key with
-    | '\x00' -> Unix.sleepf 0.01
-    | '\x1b' -> exit 0
-    | _ -> wait := press <> `Press
+    match Control.poll () with
+    | Some (Command '\x1b') -> exit 0
+    | Some (Command _) -> wait := false
+    | _ -> Unix.sleepf 0.01
   done;
   Sound.(stop Music)
 

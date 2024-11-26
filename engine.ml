@@ -2,6 +2,7 @@
 
 module type S =
 sig
+
   (* Output Window *)
 
   type window
@@ -82,26 +83,6 @@ sig
     than the one previously used with [prepare_image]. *)
 
 
-  (* Controls *)
-
-  type control
-  (** The type of all used control devices, including keyboard. *)
-
-  val open_control : unit -> control
-  (** Initialise control devices. *)
-
-  val close_control : control -> unit
-  (** Close control devices. *)
-
-  val get_key : control -> char * [`Press | `Repeat] * bool
-  (** Checks input and returns respective character, '\x00' if none.
-    The Boolean indicates the states of the fire button equivalent. *)
-
-  val get_joy : control -> int * int * bool
-  (** Checks joystick and returns x and y axis, each with values of
-    -1, 0, or +1, and the status of the fire button. *)
-
-
   (* Sound *)
 
   type audio
@@ -127,4 +108,36 @@ sig
 
   val is_playing_sound : audio -> sound -> bool
   (** Test whether the sound is currently playing. *)
+
+
+  (* Controls *)
+
+  type control
+  (** The type of all used control devices, including keyboard. *)
+
+  type dir = Left | Right | Up | Down
+  type key = Char of char | Arrow of dir
+  (** The type of keyboard keys. *)
+
+  val open_control : string -> control
+  (** Initialise control devices, taking an SDL controller mapping. *)
+
+  val close_control : control -> unit
+  (** Close control devices. *)
+
+  val is_buffered_key : bool
+  (** True when keyboard input is buffered. *)
+
+  val poll_key : control -> key option * bool
+  (** Checks input and returns respective key if pressed.
+    The Boolean indicates the state of the shift modifier. *)
+
+  val poll_pad : control ->
+    bool * bool * bool * bool *
+    float * float * float * float *
+    bool * bool * bool * bool
+  (** Checks game pad and returns left, right, up, down status of d-pad,
+    x and y axis of the left and right stick, with values between -1.0 and +1.0,
+    and the status of the A, B, X, and Y buttons. *)
+
 end

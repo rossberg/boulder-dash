@@ -10,6 +10,7 @@ struct
     | TimeOut of int
     | Effect of Physics.event
 
+
   (* Initialisation *)
 
   let audio = Engine.open_audio ()
@@ -43,22 +44,22 @@ struct
     | Music -> music
     | Reveal -> reveal
     | TimeSave -> exit
-		| TimeOut n -> timeout.(8 - n)
+    | TimeOut n -> timeout.(8 - n)
     | Effect event ->
       match event with
-		  | BoulderBump -> boulder
-		  | DiamondBump -> diamonds.(Random.int 8)
-		  | MillActivity -> mill
-		  | ExpanderActivity -> expand
-		  | AmoebaActivity -> amoeba
-		  | SlimeActivity -> slime
-		  | Exploding -> explosion
-		  | RockfordWalk -> walk
-		  | RockfordDig -> dig
-		  | RockfordCollect -> collect
-		  | RockfordPush -> push
-		  | RockfordEntry -> entry
-		  | ExitOpen -> entry
+      | BoulderBump -> boulder
+      | DiamondBump -> diamonds.(Random.int 8)
+      | MillActivity -> mill
+      | ExpanderActivity -> expand
+      | AmoebaActivity -> amoeba
+      | SlimeActivity -> slime
+      | Exploding -> explosion
+      | RockfordWalk -> walk
+      | RockfordDig -> dig
+      | RockfordCollect -> collect
+      | RockfordPush -> push
+      | RockfordEntry -> entry
+      | ExitOpen -> entry
 
   let pred = function
     | TimeOut n when n < 8 -> sound (TimeOut (n + 1))

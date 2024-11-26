@@ -87,24 +87,6 @@ let draw_image () img x y scale =
 let can_scale_image = false
 
 
-(* Controls *)
-
-type control = unit
-
-let open_control = ignore
-let close_control = ignore
-
-let get_key () =
-  let key = ref '\x00' in
-  while Graphics.key_pressed () do  (* get most recent reading *)
-    key := Graphics.read_key ()
-  done;
-  let upper = Char.uppercase_ascii !key in
-  upper, `Press, !key = upper
-
-let get_joy () = 0, 0, false
-
-
 (* Sound *)
 
 type audio = unit
@@ -116,3 +98,29 @@ let load_sound = ignore
 let play_sound () = ignore
 let stop_sound () = ignore
 let is_playing_sound () _ = false
+
+
+(* Controls *)
+
+type control = unit
+
+let open_control = ignore
+let close_control = ignore
+
+
+type dir = Left | Right | Up | Down
+type key = Char of char | Arrow of dir
+
+let is_buffered_key = true
+
+let poll_key () =
+  let key = ref '\x00' in
+  while Graphics.key_pressed () do  (* get most recent reading *)
+    key := Graphics.read_key ()
+  done;
+  let upper = Char.uppercase_ascii !key in
+  (if !key = '\x00' then None else Some (Char upper)), !key = upper
+
+
+let poll_pad () =
+  false, false, false, false, 0.0, 0.0, 0.0, 0.0, false, false, false, false

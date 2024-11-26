@@ -1,9 +1,3 @@
-### To Do
-
-- Joystick support
-- Control module?
-
-
 # OCaml Boulder Dash
 
 [Boulder Dash](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) was my favourite computer game in the 8-bit era, first released on the Atari 400/800 in 1984. Though I never owned an 8-bit machine myself, I had friends that I annoyed enough to let me play it on theirs.
@@ -88,9 +82,16 @@ Installing this library worked fine for me on MacOS, but I had trouble getting i
 
 ### Controls
 
-Sorry, no joysticks. This game only works with your keyboard. The following keys are recognised:
+If you are nerd enough to own a gamepad or joystick, the following controls should work (though only with the TSDL or Raylib build):
 
-Game controls:
+- `↑`, `←`, `↓`, `→` on d-pad - move in the respective direction
+- direction on either analogue stick - likewise
+- `A`/`╳`/fire with the above - grab/reach out without moving
+- `B`/`◯` - do not move for one turn (useful in pause mode)
+- `X`/`□` - pause/unpause game
+- `Y`/`△` - continue (if exited) / kill Rockford (if not)
+
+Alternatively, here you have your old-fashioned keyboard controls:
 
 - `W`, `A`, `S`, `D` - move in the respective direction (poor man's joystick)
 - `Z`, `Q`, `S`, `D` - move in the respective direction if you're French
@@ -133,6 +134,7 @@ The modules are:
 - `Game` - the main game loop (functorised over engine)
 - `Render` - the graphics backend (functorised over engine)
 - `Sound` - handling of sound effects (functorised over engine)
+- `Control` - handling of keybourd and joystick input (functorised over engine)
 - `Main` - common main module (functorised over engine)
 - `Engine` - unified signature for backend engines
 - `engine-*/Engine_{graphics,tsdl,raylib}` - wrapper for respective backend library
@@ -184,9 +186,9 @@ Most of what I needed could easily be done with TSDL, although it is rather low-
 
 Raylib is meant to be easy to use, so has more high-level functionality and is generally pleasent to use. I only ran into a couple of quirks:
 
-- Fullscreen oddities: For some reason, Raylib decides to change the resolution when going to fullscreen, at least on Mac. And the one it picks isn't even a natural one for the screen. I had to work around this by adapting the current graphics scaling to the new resolution.
+- Fullscreen bugs: Borderless_windowed mode does not work correctly on MacOS. For true Fullscreen on the other hand, Raylib decides to change the resolution, which messes up Windows desktops. And on Mac, the one it picks isn't even a natural resolution for the screen. Worse, when the player clicks on the Fullscreen window button on a Mac, a segfault ensues.
 
-- Key bindings: For unknown reasons, Raylib's of cooked key press events is very unreliable, at least when doing direct key code checking at the same time. It swallows, like, more than half the key presses. Although this approach works fine for TSDL, I had to abandon it for Raylib. As a result, some of the game's meta controls will be mapped incorrectly for folks daring to not use an English keyboard.
+- Key bindings: For unknown reasons, Raylib's handling of cooked key press events is very unreliable, at least when doing direct key code checking at the same time. It swallows, like, more than half the key presses. Although this approach works fine for TSDL, I had to abandon it for Raylib. As a result, some of the game's meta controls will be mapped incorrectly for folks daring to not use an English keyboard.
 
 - Unsafe: Its imperative interface does not prevent you from trying things like creating a texture before opening a window, which it doesn't like much and will respond to with a crash.
 
@@ -201,8 +203,9 @@ Version 2 adds the following niceties:
 - Original level color schemes
 - Full screen mode
 - Dynamic scaling adjustment
+- Gamepad/joystick controls
 - Precise keyboard controls and control via arrow keys
-- Fix expired mill wall
+- Fix behaviour of expired magic wall
 
 
 ### Acknowledgements and Resources

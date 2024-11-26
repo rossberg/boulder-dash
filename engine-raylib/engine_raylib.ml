@@ -38,7 +38,7 @@ let clear_window () color =
   Raylib.clear_background color;
   Raylib.end_drawing ()
 
-let fullscreen_window = Raylib.toggle_borderless_windowed
+let fullscreen_window = Raylib.toggle_fullscreen
 
 
 (* Animation Frames *)
@@ -85,105 +85,6 @@ let draw_image () img x y scale =
 let can_scale_image = true
 
 
-(* Controls *)
-
-type control = int option
-
-let open_control () =
-  if Raylib.is_gamepad_available 0 then
-let s = Raylib.get_gamepad_name 0 in
-let n = Raylib.get_gamepad_axis_count 0 in
-Printf.printf "[`%s`: %d axes]\n%!" s n;
-    Some 0
-  else
-let _ = Printf.printf "[no gamepad]\n%!" in
-    None
-
-let close_control _control = ()
-
-
-(*TODO: remove
-let keys = let open Raylib.Key in
-[
-  (* Ordered such that horizontal movement takes precedence *)
-  Left, 'A'; Right, 'D'; Up, 'W'; Down, 'S';
-  A, 'A'; D, 'D'; W, 'W'; S, 'S'; X, 'X';
-  Space, ' '; Enter, '\r'; Kp_enter, '\r';
-  Tab, '\t'; Backspace, '\b'; Escape, '\x1b';
-  Minus, '-'; Equal, '+';  (* minor convenience, no shift needed *)
-]
-
-let last_key = ref '\x00'
-
-let get_key () =
-  if Raylib.window_should_close () then exit 0;
-  Raylib.poll_input_events ();
-  let cooked = ref '\x00' in
-  let char = ref (Uchar.of_int 1) in
-  while !char <> Uchar.of_int 0 do
-    char := Raylib.get_char_pressed ();
-    if !char <> Uchar.of_int 0 then
-      cooked := try Uchar.to_char !char with _ -> '\x00'
-);Printf.printf "[pressed `%c`]\n%!" !cooked
-  done;
-  let shift =
-    Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift) in
-  let key =
-    match List.find_opt (fun (key, _) -> Raylib.is_key_down key) keys with
-    | Some (_, char) -> char
-    | None -> Char.uppercase_ascii !cooked  (* cooked input for meta controls *)
-  in
-  let rep = if key = !last_key then `Repeat else `Press in
-  last_key := key;
-  key, rep, shift
-*)
-
-(* Raylib.is_key_down seems to interfer with .get_char_pressed, so we can't use the
- * latter. Special-case all relevant keys instead and forgot about keymaps. *)
-let keys = let open Raylib.Key in
-[
-  (* Ordered such that horizontal movement takes precedence *)
-  Left, 'A'; Right, 'D'; Up, 'W'; Down, 'S';
-  Kp_4, '4'; Kp_6, '6'; Kp_8, '8'; Kp_2, '2'; Kp_5, '5';
-  A, 'A'; D, 'D'; W, 'W'; S, 'S'; X, 'X';
-  K, 'K'; U, 'U'; O, 'O'; P, 'P';
-  Space, ' '; Enter, '\r'; Kp_enter, '\r';
-  Tab, '\t'; Backspace, '\b'; Escape, '\x1b';
-  Minus, '-'; Equal, '+'; Slash, '/';
-  F, 'F'; Left_bracket, '['; Right_bracket, ']';
-]
-
-let last_key = ref '\x00'
-
-let get_key _ =
-  if Raylib.window_should_close () then exit 0;
-  Raylib.poll_input_events ();
-  let shift =
-    Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift) in
-  let key =
-    match List.find_opt (fun (key, _) -> Raylib.is_key_down key) keys with
-    | Some (_, char) -> char
-    | None -> '\x00'
-  in
-  let rep = if key = !last_key then `Repeat else `Press in
-  last_key := key;
-  key, rep, shift
-
-
-let get_axis pad axis =
-  let v = Raylib.get_gamepad_axis_movement pad axis in
-  if v < -0.25 then -1 else if v > +0.25 then +1 else 0
-
-let get_joy = function
-  | None -> 0, 0, false
-  | Some pad ->
-    let dx = get_axis pad Raylib.GamepadAxis.Left_x in
-    let dy = get_axis pad Raylib.GamepadAxis.Left_y in
-    let button = Raylib.(is_gamepad_button_down pad GamepadButton.Left_thumb) in
-Printf.printf "[joy %+d %+d %b]\n%!" dx dy button;
-    dx, dy, button
-
-
 (* Sound *)
 
 type audio = unit
@@ -195,3 +96,64 @@ let load_sound = Raylib.load_sound
 let play_sound () = Raylib.play_sound
 let stop_sound () = Raylib.stop_sound
 let is_playing_sound () = Raylib.is_sound_playing
+
+
+(* Controls *)
+
+type control = int option
+
+let open_control db =
+  Raylib.(set_exit_key Key.Null);
+  ignore (Raylib.set_gamepad_mappings db);
+  Raylib.end_drawing ();  (* pump event loop to discover devices *)
+  if Raylib.is_gamepad_available 0 then Some 0 else None
+
+let close_control _control = ()
+
+
+type dir = Left | Right | Up | Down
+type key = Char of char | Arrow of dir
+
+let is_buffered_key = false
+
+let arrow_keys =
+  Raylib.[Key.Left, Left; Key.Right, Right; Key.Up, Up; Key.Down, Down]
+let ctrl_keys =  (* for some reason, Raylib remaps these keycodes *)
+  Raylib.Key.[Escape, '\x1b'; Enter, '\r'; Tab, '\t'; Backspace, '\b']
+
+let poll_key _ =
+  if Raylib.window_should_close () then exit 0;
+  Raylib.poll_input_events ();
+  let shift =
+    Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift) in
+  let key = ref (Option.map (fun (_, dir) -> Arrow dir)
+      (List.find_opt (fun (code, _) -> Raylib.is_key_down code) arrow_keys)) in
+  if !key = None then
+    key := Option.map (fun (_, c) -> Char c)
+      (List.find_opt (fun (code, _) -> Raylib.is_key_down code) ctrl_keys);
+  for code = 32 to 127 do
+    try
+      if !key = None && Raylib.is_key_down (Raylib.Key.of_int code) then
+        key := Some (Char (Char.chr code))
+    with Failure _ -> ()  (* ignore invalid key codes *)
+  done;
+  !key, shift
+
+
+let poll_pad = function
+  | None ->
+    false, false, false, false, 0.0, 0.0, 0.0, 0.0, false, false, false, false
+  | Some pad ->
+    let open Raylib.GamepadButton in
+    Raylib.is_gamepad_button_down pad Left_face_left,
+    Raylib.is_gamepad_button_down pad Left_face_right,
+    Raylib.is_gamepad_button_down pad Left_face_up,
+    Raylib.is_gamepad_button_down pad Left_face_down,
+    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_x,
+    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_y,
+    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_x,
+    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_y,
+    Raylib.is_gamepad_button_down pad Right_face_down,
+    Raylib.is_gamepad_button_down pad Right_face_right,
+    Raylib.is_gamepad_button_down pad Right_face_left,
+    Raylib.is_gamepad_button_down pad Right_face_up

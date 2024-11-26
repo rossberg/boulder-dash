@@ -108,75 +108,6 @@ let draw_image (_, ren) img x y scale = get_ok @@
 let can_scale_image = true
 
 
-(* Controls *)
-
-type control = Sdl.joystick option
-
-let open_control () = get_ok @@
-  let* n = Sdl.num_joysticks () in
-Printf.printf "[%d joysticks]\n%!" n;
-  if n = 0 then
-    ok None
-  else
-    let* joystick = Sdl.joystick_open 0 in
-let* s = Sdl.joystick_name joystick in
-let* na = Sdl.joystick_num_axes joystick in
-let* nb = Sdl.joystick_num_buttons joystick in
-Printf.printf "[`%s`: %d axes %d buttons]\n%!" s na nb;
-    ok (Some joystick)
-
-let close_control control =
-  Option.iter Sdl.joystick_close control
-
-
-let keys = let open Sdl.Scancode in  (* movement keys that don't remap *)
-[
-  (* Ordered such that horizontal movement takes precedence *)
-  left, 'A'; right, 'D'; up, 'W'; down, 'S';
-  a, 'A'; d, 'D'; w, 'W'; s, 'S'; x, 'X';
-  space, ' '; return, '\r'; kp_enter, '\r';
-  tab, '\t'; backspace, '\b'; escape, '\x1b';
-  minus, '-'; equals, '+'; slash, '/';  (* minor convenience, no shift needed *)
-]
-
-let last_key = ref '\x00'
-
-let get_key _control =
-  let cooked = ref '\x00' in
-  let event = Sdl.Event.create () in
-  while Sdl.poll_event (Some event) do
-    let typ = Sdl.Event.(get event typ) in
-    if typ = Sdl.Event.quit then exit 0;
-    if typ = Sdl.Event.text_input then
-      let s = Sdl.Event.(get event text_input_text) in
-      cooked := s.[String.length s - 1]  (* last cooked, ignore UTF-8 *)
-  done;
-  let state = Sdl.get_keyboard_state () in
-  let shift = Sdl.Scancode.(state.{lshift} = 1 || state.{rshift} = 1) in
-  let key =
-    match List.find_opt (fun (code, _) -> state.{code} = 1) keys with
-    | Some (_, char) -> char
-    | None -> Char.uppercase_ascii !cooked  (* cooked input for meta controls *)
-  in
-  let rep = if key = !last_key then `Repeat else `Press in
-  last_key := key;
-  key, rep, shift
-
-
-let get_axis joystick axis =
-  let i = Sdl.joystick_get_axis joystick axis in
-  if i < -8000 then -1 else if i > +8000 then +1 else 0
-
-let get_joy = function
-  | None -> 0, 0, false
-  | Some joystick ->
-    let dx = get_axis joystick 0 in
-    let dy = get_axis joystick 1 in
-    let button = Sdl.joystick_get_button joystick 0 = 1 in
-Printf.printf "[joy %+d %+d %b]\n%!" dx dy button;
-    dx, dy, button
-
-
 (* Sound *)
 
 (* Unfortunately, TSDL does not yet support SDL3, which has audio mixing built
@@ -260,3 +191,68 @@ let is_playing_sound aud sound =
     has_sound sound voice &&
     Sdl.(get_audio_device_status voice.id = Audio.playing)
   ) aud
+
+
+(* Controls *)
+
+type control = Sdl.game_controller option
+
+let open_control db = get_ok @@
+  let* _ = Sdl.game_controller_add_mapping db in
+  let* n = Sdl.num_joysticks () in
+  if n = 0 then
+    ok None
+  else
+    let* pad = Sdl.game_controller_open 0 in
+    ok (Some pad)
+
+let close_control control =
+  Option.iter Sdl.game_controller_close control
+
+
+type dir = Left | Right | Up | Down
+type key = Char of char | Arrow of dir
+
+let is_buffered_key = false
+
+let arrow_keys = Sdl.K.[left, Left; right, Right; up, Up; down, Down]
+
+let poll_key _control =
+  let event = Sdl.Event.create () in
+  while Sdl.poll_event (Some event) do () done;
+  let state = Sdl.get_keyboard_state () in
+  let shift = Sdl.Scancode.(state.{lshift} = 1 || state.{rshift} = 1) in
+  let key = ref None in
+  for scancode = 0 to Bigarray.Array1.dim state - 1 do
+    if !key  = None && state.{scancode} = 1 then
+      let keycode = Sdl.get_key_from_scancode scancode in
+      if keycode < 0x80 then
+        key := Some (Char Char.(uppercase_ascii (chr keycode)))
+      else
+        key := Option.map (fun dir -> Arrow dir)
+          (List.assoc_opt keycode arrow_keys)
+  done;
+  !key, shift
+
+
+let poll_cross pad button1 button2 =
+  if Sdl.game_controller_get_button pad button1 = 1 then -1 else
+  if Sdl.game_controller_get_button pad button2 = 1 then +1 else 0
+
+let poll_pad = function
+  | None ->
+    false, false, false, false, 0.0, 0.0, 0.0, 0.0, false, false, false, false
+  | Some pad ->
+    let open Sdl.Controller in
+    Sdl.game_controller_get_button pad button_dpad_left = 1,
+    Sdl.game_controller_get_button pad button_dpad_right = 1,
+    Sdl.game_controller_get_button pad button_dpad_up = 1,
+    Sdl.game_controller_get_button pad button_dpad_down = 1,
+    float (Sdl.game_controller_get_axis pad axis_left_x) /. 32768.0,
+    float (Sdl.game_controller_get_axis pad axis_left_y) /. 32768.0,
+    float (Sdl.game_controller_get_axis pad axis_right_x) /. 32768.0,
+    float (Sdl.game_controller_get_axis pad axis_right_y) /. 32768.0,
+    Sdl.game_controller_get_button pad button_a = 1,
+    Sdl.game_controller_get_button pad button_b = 1,
+    Sdl.game_controller_get_button pad button_x = 1,
+    Sdl.game_controller_get_button pad button_y = 1
