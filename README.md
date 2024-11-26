@@ -2,15 +2,15 @@
 
 [Boulder Dash](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) was my favourite computer game in the 8-bit era, first released on the Atari 400/800 in 1984. Though I never owned an 8-bit machine myself, I had friends that I annoyed enough to let me play it on theirs.
 
-This is a homage to its 40th anniversary in form of a fairly faithful clone of the original game, implemented in just a few 100 lines of OCaml.
+This is a homage to its 40th anniversary in form of a fairly faithful and feature-complete clone of the original game and its first successor, implemented in just a few lines of OCaml.
 
-Version 2 also was an excuse to play with the OCaml bindings to popular graphics engines, and hence, it comes with 3 possible backends:
+Version 2 of it was an excuse for me to mess around with the OCaml bindings to popular graphics engines, and hence, it comes with 3 possible backends:
 
 1. the homely bare OCaml [Graphics](https://github.com/ocaml/graphics) library,
 2. the [TSDL](https://github.com/dbuenzli/tsdl) binding to the [SDL](https://www.libsdl.org) API,
 3. the [Raylib](https://github.com/tjammer/raylib-ocaml) binding to the [Raylib](https://www.raylib.com/) game engine.
 
-The above is in order of increasingly better user experience, for the price of a harder build experience. Some unfortunate [limitations](#limitations) apply to the Graphics library option in particular.
+The above is in order of increasingly better user experience, for the price of a potentially harder build experience. Some unfortunate [limitations](#limitations) apply to the Graphics library option in particular.
 
 In theory, all versions should run on Windows, Mac, and Linux, though I was too lazy to test all combinations, and had trouble installing some of the dependencies on some of the systems.
 
@@ -22,62 +22,49 @@ In theory, all versions should run on Windows, Mac, and Linux, though I was too 
 * All 40 levels and 5 difficulties of Boulder Dash 1 & 2
 * Pause-and-go mode for relaxed playing
 
+If you have previously looked at this, version 2 added the following niceties:
+
+* Support for SDL and Raylib engines
+* Original sound effects and music
+* Original level color schemes
+* Full screen mode
+* Dynamic graphics scaling adjustment
+* Gamepad/joystick support
+* Precise keyboard controls and control via arrow keys
+* Fix behaviour of expired magic wall
+* All Boulder Dash 2 levels
+
 
 ### Building
 
-There are 3 possible backends, resulting in 3 ways to build the program.
-
-#### The Graphics build
-
-To build the version of the game using the Graphics library, it should work to invoke
+There are 3 possible backends, resulting in 3 ways to build the program. Provided you have the necessary dependencies installed, either of the following should work:
 ```
-dune build main_graphics.exe
+dune build engine-graphics/main_graphics.exe
+dune build engine-tsdl/main_tsdl.exe
+dune build engine-raylib/main_raylib.exe
 ```
-If you are old-school and lazy like me, you can also simply say
+If you are old-school and lazy like me, you can also simply say one of
 ```
-make
+make graphics
+make tsdl
+make raylib
 ```
 and as a bonus, get a link to the executable in the current directory.
 
 Prerequisites:
 
-- the Graphics library (`opam install graphics`)
+- either the Graphics library (`opam install graphics`),
 
-When the graphics didn't work out of the box (e.g., the window cannot be opened on Mac), I found the recipes [here](https://cs51.io/handouts/setup/) here helpful.
+  *Note: When the graphics didn't work out of the box (e.g., the window cannot be opened on Mac), I found the recipes [here](https://cs51.io/handouts/setup/) here helpful.*
+
+- or the TSDL library (`opam install tsdl`),
+
+  *Note: Installing this library worked fine for me on MacOS, but I had some trouble installing it on Windows, although it should work. Perhaps your system is cleaner.*
+
+- or the Raylib library (`opam install raylib`).
 
 If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you, can build and run this version with `nix run github:rossberg/boulder-dash?dir=nix`
 
-#### The TDSL build
-
-To build a version of the game using the TSDL library, invoke
-```
-dune build main_tsdl.exe
-```
-Or simpler:
-```
-make tsdl
-```
-
-Prerequisites:
-
-- the TSDL library (`opam install tsdl`)
-
-#### The Raylib version
-
-To build a version of the game using the Raylib library, invoke
-```
-dune build main_raylib.exe
-```
-Or simpler:
-```
-make raylib
-```
-
-Prerequisites:
-
-- the Raylib library (`opam install raylib`)
-
-Installing this library worked fine for me on MacOS, but I had trouble getting it to work on Windows, although it should run. Perhaps you are more lucky.
 
 
 ### Controls
@@ -89,7 +76,7 @@ If you are nerd enough to own a gamepad or joystick, the following controls shou
 - `A`/`╳`/fire with the above - grab/reach out without moving
 - `B`/`◯` - do not move for one turn (useful in pause mode)
 - `X`/`□` - pause/unpause game
-- `Y`/`△` - continue (if exited) / kill Rockford (if not)
+- `Y`/`△` - continue (if died or exited) / kill Rockford (if not)
 
 Alternatively, here you have your old-fashioned keyboard controls:
 
@@ -99,27 +86,27 @@ Alternatively, here you have your old-fashioned keyboard controls:
 - `↑`, `←`, `↓`, `→` - move in the respective direction on arrow keys (TSDL or Raylib engine only)
 - `SHIFT` with the above - grab/reach out without moving (poor man's fire button)
 - `SPACE`, `5` - do not move for one turn (useful in pause mode)
+- `SPACE` - continue (after Rockford has died or exited)
 - `K` - kill Rockford (by setting timer to 0)
 - `P` - pause/unpause game
 
 Meta controls:
 
-- `SPACE` - continue (after Rockford has died or exited)
 - `TAB` - skip current level (cheater!)
 - `BACKSPACE` - go back one level (really?)
 - `+`, `-` - increase/decrease difficulty
-- `/` - advance directly to Boulder Dash 2
+- `/` - advance directly to Boulder Dash 2 levels
 - `F` - toggle full-screen mode (TSDL or Raylib engine only)
 - `[`, `]` - decrease/increase graphics scaling factor (TSDL or Raylib engine only)
 - `ESC` - quit game
 
-When paused, you can still move with `W`, `A`, `S`, `D` and friends, or wait a turn using `SPACE`. That will effectively unpause the game for a single tick and then immediately pause again, using up a single time slice. If you are old and slow like me, or fed up up with the keybord lag (see below), that allows you to play it like a puzzler rather than a stressful action game.
-
 There are also a couple of cheat codes, but I won't tell.
+
+When paused, you can still move with `W`, `A`, `S`, `D` and friends, or wait a turn using `SPACE`. That will effectively unpause the game for a single tick and then immediately pause again, using up a single time slice. If you are old and slow like me, or fed up up with the keybord lag (see below), that allows you to play it like a puzzler rather than a stressful action game.
 
 Beyond that, Boulder Dash is mostly a self-explanatory game. Figuring out the mechanics of some elements is part of the experience. We didn't have a manual in the olden days either.
 
-Oh, and if you don't like the size of the sprites, you can scale the whole image by passing `--scale <int>` on the command line. The default is 4 (times the original 8-bit sprite sizes, which were designed for the fancy 320x200 displays of the times). In the TSDL or Raylib build, you can of course change this dynamically using the `[` and `]` keys.
+Oh, and if you don't like the size of the sprites, you can scale the whole image using the `[` and `]` keys. However, that doesn't work in the Graphics library build, where the only alternative is passing `--scale <int>` on the command line. The default is 4 (times the original 8-bit sprite sizes, which were designed for the fancy 320x200 displays of the times).
 
 
 ### Implementation
@@ -129,19 +116,19 @@ I tried to keep the code simple. Unfortunately, it turned out fairly imperative,
 The modules are:
 
 - `Cave` - the representation of a game level
-- `Levels` - the original binary levels data with a decoder
+- `Levels` - the original levels data with a decoder
 - `Physics` - the core game logic for transitioning a cave one tick
 - `Game` - the main game loop (functorised over engine)
 - `Render` - the graphics backend (functorised over engine)
 - `Sound` - handling of sound effects (functorised over engine)
-- `Control` - handling of keybourd and joystick input (functorised over engine)
+- `Control` - handling of keyboard and joystick input (functorised over engine)
 - `Main` - common main module (functorised over engine)
 - `Engine` - unified signature for backend engines
 - `engine-*/Engine_{graphics,tsdl,raylib}` - wrapper for respective backend library
 - `main-*/Main_{graphics,tsdl,raylib}` - main entry point for respective build
 - `engine-graphics/Bmp` - a simple decoder for .bmp files
 
-Little surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
+Not too much surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
 
 
 ### Limitations
@@ -174,38 +161,25 @@ Finally, because the Graphics library is much more unhurried in general, renderi
 
 #### TSDL Library
 
-Most of what I needed could easily be done with TSDL, although it is rather low-level, so lacks certain convenience, e.g., for manipulating images. But the only real limitation revolved around its sound subsystem:
+Most of what's needed for this little retro game could easily be done with TSDL, although it is rather low-level, so lacks certain convenience, e.g., for manipulating images. The only real limitation revolved around its sound subsystem:
 
-- No sound mixing: Although SDL3 can freely mix multiple audio streams, TSDL currently only supports SDL2, which does not have that capability. Since I did not feel like implementing that myself, I hack around that by using all available audio devices as voices. Depending on the hardware, that could mean that some sound effects are swallowed in noisy situations.
+- No sound mixing: Although SDL3 can freely mix multiple audio streams, TSDL currently only supports SDL2, which does not have that capability. Since I did not feel like implementing that myself, I hacked around it by using all available audio devices as voices. Depending on your hardware, that could mean that some sound effects are swallowed in noisy situations.
 
 - Only .wav: In addition, SDL only supports plain wave files, so I can't deploy the sound assets as smaller MP3s without introducing additional dependencies.
 
-- Unsafe: When screwing up and using the API incorrectly, I believe I witnessed crashes in some cases, though I can't reproduce the details.
+- Key bindings: SDL2 has no way to produce key values relative to modifiers, that's another SDL3 feature. So I wasn't able to customise keyboard layout for users daring to not use an English keyboard.
+
+- Unsafe: When screwing up and using the API incorrectly, I witnessed crashes in some cases, though I can't reproduce the details. Sometimes even when I didn't do anything wrong, like plugging in a joystick without using any related API.
 
 #### Raylib Library
 
-Raylib is meant to be easy to use, so has more high-level functionality and is generally pleasent to use. I only ran into a couple of quirks:
+Raylib is meant to be easy to use, so has more high-level functionality and is generally feairly pleasent. I only ran into a couple of quirks:
 
-- Fullscreen bugs: Borderless_windowed mode does not work correctly on MacOS. For true Fullscreen on the other hand, Raylib decides to change the resolution, which messes up Windows desktops. And on Mac, the one it picks isn't even a natural resolution for the screen. Worse, when the player clicks on the Fullscreen window button on a Mac, a segfault ensues.
+- Fullscreen bugs: Borderless_windowed mode does not work correctly on MacOS. For true Fullscreen on the other hand, Raylib decides to change the resolution, which messes up Windows desktops. And on Mac, the fullscreen resolution it picks isn't even a natural one for the screen. Worse, when a Mac user clicks on the OS's green Fullscreen button, a segfault ensues.
 
-- Key bindings: For unknown reasons, Raylib's handling of cooked key press events is very unreliable, at least when doing direct key code checking at the same time. It swallows, like, more than half the key presses. Although this approach works fine for TSDL, I had to abandon it for Raylib. As a result, some of the game's meta controls will be mapped incorrectly for folks daring to not use an English keyboard.
+- Key bindings: Like TSDL, Raylib cannot hand me processed key codes.
 
-- Unsafe: Its imperative interface does not prevent you from trying things like creating a texture before opening a window, which it doesn't like much and will respond to with a crash.
-
-
-### Change History
-
-Version 2 adds the following niceties:
-
-- All Boulder Dash 2 levels
-- Support for SDL and Raylib engines
-- Original sound effects and music
-- Original level color schemes
-- Full screen mode
-- Dynamic scaling adjustment
-- Gamepad/joystick controls
-- Precise keyboard controls and control via arrow keys
-- Fix behaviour of expired magic wall
+- Unsafe: Raylib's imperative interface did not prevent me from trying stupid things like creating a texture before opening a window, which it doesn't like much and will respond to with an irritated crash.
 
 
 ### Acknowledgements and Resources
