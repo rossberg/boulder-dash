@@ -25,10 +25,11 @@ struct
   let axis v = if v < -0.5 then -1 else if v > +0.5 then +1 else 0
 
   let poll () =
-    match Engine.poll_key control with
-    | Some key, shift ->
-      let last = !last_key in
-      last_key := Some key;
+    let last = !last_key in
+    let key_opt, shift = Engine.poll_key control in
+    last_key := key_opt;
+    match key_opt with
+    | Some key ->
       (match key with
       | Engine.(Arrow Up) | Char ('W' | 'Z' | '8') -> Some (Move (Some Up, shift))
       | Engine.(Arrow Left) | Char ('A' | 'Q' | '4') -> Some (Move (Some Left, shift))
@@ -39,7 +40,7 @@ struct
         Some (Command c)
       | _ -> None
       )
-    | None, _ ->
+    | None ->
       let l, r, u, d, x1, y1, x2, y2, a, b, x, y = Engine.poll_pad control in
       let dx = compare (dpad l r + axis x1 + axis x2) 0 in
       let dy = compare (dpad u d + axis y1 + axis y2) 0 in
