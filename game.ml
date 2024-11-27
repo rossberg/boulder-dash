@@ -120,7 +120,7 @@ let render game cave frame revealed =
       Render.print White (0, 0) "     BONUS LIFE     "
     else
       Render.print White (0, 0)
-        (fmt "BD%c CAVE %c/%d LIVES %d"
+        (fmt "PT%c CAVE %c/%d LIVES %d"
           cave.name.[0] cave.name.[1] cave.difficulty game.lives)
   )
   else

@@ -22,7 +22,7 @@ struct
   let last_pad = ref None
 
   let dpad l h = if l then -1 else if h then +1 else 0
-  let axis v = if v < -0.5 then -1 else if v > +0.5 then +1 else 0
+  let axis v = if v < -0.9 then -1 else if v > +0.9 then +1 else 0
 
   let poll () =
     let last = !last_key in

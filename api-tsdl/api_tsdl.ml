@@ -37,6 +37,7 @@ let clear_window (_, ren) (r, g, b) = get_ok @@
   let* () = Sdl.set_render_draw_color ren r g b 0 in
   let* () = Sdl.render_clear ren in
   let () = Sdl.render_present ren in
+  let* () = Sdl.render_clear ren in
   ok ()
 
 let fullscreen_window (win, _) = get_ok @@
@@ -189,7 +190,8 @@ let stop_sound aud sound =
 let is_playing_sound aud sound =
   Array.exists (fun voice ->
     has_sound sound voice &&
-    Sdl.(get_audio_device_status voice.id = Audio.playing)
+    Sdl.(get_audio_device_status voice.id = Audio.playing) &&
+    Sdl.(get_queued_audio_size voice.id > 0)
   ) aud
 
 

@@ -53,8 +53,8 @@ let win = Api.open_window (!scale * 320) (!scale * 200) "Boulder Dash"
 let _ = at_exit (fun () -> Api.close_window win)
 
 let clear () =
-  dirty := true;  (* invalidate all screen *)
-  Api.clear_window win black
+  Api.clear_window win black;
+  dirty := true  (* invalidate all screen *)
 
 let reset (w, h) fpt =
   width := w; height := h; frames_per_turn := fpt;
