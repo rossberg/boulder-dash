@@ -1,6 +1,6 @@
 (* Graphics and Rendering *)
 
-module Make (_ : Engine.S) :
+module Make (_ : Api.S) :
 sig
    type color = int * int * int
    (** An RGB color. *)

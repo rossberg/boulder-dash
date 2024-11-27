@@ -1,4 +1,4 @@
-module Make (Engine : Engine.S) =
+module Make (Api : Api.S) =
 struct
 
   (* Initialisation *)
@@ -8,8 +8,8 @@ struct
     let path = Filename.dirname Sys.argv.(0) / "assets" / "gamecontrollerdb.txt" in
     In_channel.(with_open_text path input_all)
 
-  let control = Engine.open_control db
-  let _ = at_exit (fun () -> Engine.close_control control)
+  let control = Api.open_control db
+  let _ = at_exit (fun () -> Api.close_control control)
 
 
   (* Input *)
@@ -26,22 +26,22 @@ struct
 
   let poll () =
     let last = !last_key in
-    let key_opt, shift = Engine.poll_key control in
+    let key_opt, shift = Api.poll_key control in
     last_key := key_opt;
     match key_opt with
     | Some key ->
       (match key with
-      | Engine.(Arrow Up) | Char ('W' | 'Z' | '8') -> Some (Move (Some Up, shift))
-      | Engine.(Arrow Left) | Char ('A' | 'Q' | '4') -> Some (Move (Some Left, shift))
-      | Engine.(Arrow Down) | Char ('S' | '2') -> Some (Move (Some Down, shift))
-      | Engine.(Arrow Right) | Char ('D' | '6') -> Some (Move (Some Right, shift))
-      | Engine.Char ('X' | '5') -> Some (Move (None, shift))
-      | Engine.Char c when Engine.is_buffered_key || last <> Some key ->
+      | Api.(Arrow Up) | Char ('W' | 'Z' | '8') -> Some (Move (Some Up, shift))
+      | Api.(Arrow Left) | Char ('A' | 'Q' | '4') -> Some (Move (Some Left, shift))
+      | Api.(Arrow Down) | Char ('S' | '2') -> Some (Move (Some Down, shift))
+      | Api.(Arrow Right) | Char ('D' | '6') -> Some (Move (Some Right, shift))
+      | Api.Char ('X' | '5') -> Some (Move (None, shift))
+      | Api.Char c when Api.is_buffered_key || last <> Some key ->
         Some (Command c)
       | _ -> None
       )
     | None ->
-      let l, r, u, d, x1, y1, x2, y2, a, b, x, y = Engine.poll_pad control in
+      let l, r, u, d, x1, y1, x2, y2, a, b, x, y = Api.poll_pad control in
       let dx = compare (dpad l r + axis x1 + axis x2) 0 in
       let dy = compare (dpad u d + axis y1 + axis y2) 0 in
       match dx, dy with

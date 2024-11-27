@@ -1,6 +1,6 @@
 (* Sound Effects *)
 
-module Make (_ : Engine.S) :
+module Make (_ : Api.S) :
 sig
   type sound =
     | Music

@@ -1,9 +1,9 @@
-module Make (Engine : Engine.S) =
+module Make (Api : Api.S) =
 struct
 
-module Render = Render.Make (Engine)
-module Sound = Sound.Make (Engine)
-module Control = Control.Make (Engine)
+module Render = Render.Make (Api)
+module Sound = Sound.Make (Api)
+module Control = Control.Make (Api)
 
 
 (* Display Configuration *)

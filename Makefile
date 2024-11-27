@@ -10,17 +10,9 @@ default:
 all: graphics tsdl raylib
 
 
-graphics:
-	dune build engine-$@/main_$@.exe
-	ln -f _build/default/engine-$@/main_$@.exe $(NAME).exe
-
-tsdl:
-	dune build engine-$@/main_$@.exe
-	ln -f _build/default/engine-$@/main_$@.exe $(NAME).exe
-
-raylib:
-	dune build engine-$@/main_$@.exe
-	ln -f _build/default/engine-$@/main_$@.exe $(NAME).exe
+graphics tsdl raylib: %:
+	dune build api-$@/main_$@.exe
+	ln -f _build/default/api-$@/main_$@.exe $(NAME).exe
 
 
 zip-%: %

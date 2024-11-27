@@ -4,7 +4,7 @@
 
 This is a homage to its 40th anniversary in form of a fairly faithful and feature-complete clone of the original game and its first successor, implemented in just a few lines of OCaml.
 
-Version 2 of it was an excuse for me to mess around with the OCaml bindings to popular graphics engines, and hence, it comes with 3 possible backends:
+Version 2 of it was an excuse for me to mess around with the OCaml bindings to popular graphics and media APIs, and hence, it comes with 3 possible backends:
 
 1. the homely bare OCaml [Graphics](https://github.com/ocaml/graphics) library,
 2. the [TSDL](https://github.com/dbuenzli/tsdl) binding to the [SDL](https://www.libsdl.org) API,
@@ -24,7 +24,7 @@ In theory, all versions should run on Windows, Mac, and Linux, though I was too 
 
 If you have previously looked at this, version 2 added the following niceties:
 
-* Support for SDL and Raylib engines
+* Support for SDL and Raylib graphics engines
 * Original sound effects and music
 * Original level color schemes
 * Full screen mode
@@ -39,9 +39,9 @@ If you have previously looked at this, version 2 added the following niceties:
 
 There are 3 possible backends, resulting in 3 ways to build the program. Provided you have the necessary dependencies installed, either of the following should work:
 ```
-dune build engine-graphics/main_graphics.exe
-dune build engine-tsdl/main_tsdl.exe
-dune build engine-raylib/main_raylib.exe
+dune build api-graphics/main_graphics.exe
+dune build api-tsdl/main_tsdl.exe
+dune build api-raylib/main_raylib.exe
 ```
 If you are old-school and lazy like me, you can also simply say one of
 ```
@@ -83,7 +83,7 @@ Alternatively, here you have your old-fashioned keyboard controls:
 - `W`, `A`, `S`, `D` - move in the respective direction (poor man's joystick)
 - `Z`, `Q`, `S`, `D` - move in the respective direction if you're French
 - `8`, `4`, `2`, `6` - move in the respective direction on number pad
-- `↑`, `←`, `↓`, `→` - move in the respective direction on arrow keys (TSDL or Raylib engine only)
+- `↑`, `←`, `↓`, `→` - move in the respective direction on arrow keys (TSDL or Raylib lib only)
 - `SHIFT` with the above - grab/reach out without moving (poor man's fire button)
 - `SPACE`, `5` - do not move for one turn (useful in pause mode)
 - `SPACE` - continue (after Rockford has died or exited)
@@ -96,8 +96,8 @@ Meta controls:
 - `BACKSPACE` - go back one level (really?)
 - `+`, `-` - increase/decrease difficulty
 - `/` - advance directly to Boulder Dash 2 levels
-- `F` - toggle full-screen mode (TSDL or Raylib engine only)
-- `[`, `]` - decrease/increase graphics scaling factor (TSDL or Raylib engine only)
+- `F` - toggle full-screen mode (TSDL or Raylib lib only)
+- `[`, `]` - decrease/increase graphics scaling factor (TSDL or Raylib lib only)
 - `ESC` - quit game
 
 There are also a couple of cheat codes, but I won't tell.
@@ -118,15 +118,15 @@ The modules are:
 - `Cave` - the representation of a game level
 - `Levels` - the original levels data with a decoder
 - `Physics` - the core game logic for transitioning a cave one tick
-- `Game` - the main game loop (functorised over engine)
-- `Render` - the graphics backend (functorised over engine)
-- `Sound` - handling of sound effects (functorised over engine)
-- `Control` - handling of keyboard and joystick input (functorised over engine)
-- `Main` - common main module (functorised over engine)
-- `Engine` - unified signature for backend engines
-- `engine-*/Engine_{graphics,tsdl,raylib}` - wrapper for respective backend library
-- `main-*/Main_{graphics,tsdl,raylib}` - main entry point for respective build
-- `engine-graphics/Bmp` - a simple decoder for .bmp files
+- `Game` - the main game loop (functorised over backend library)
+- `Render` - the graphics backend (functorised over backend library)
+- `Sound` - handling of sound effects (functorised over backend library)
+- `Control` - handling of keyboard and joystick input (functorised over backend library)
+- `Main` - common main module (functorised over backend library)
+- `Api` - unified signature for backend library API
+- `api-*/Api_{graphics,tsdl,raylib}` - wrapper for respective backend library
+- `api-*/Main_{graphics,tsdl,raylib}` - main entry point for respective build
+- `api-graphics/Bmp` - a simple decoder for .bmp files
 
 Not too much surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
 

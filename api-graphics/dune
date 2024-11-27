@@ -2,6 +2,6 @@
   (optional)
   (public_name boulderdash_graphics)
   (name main_graphics)
-  (modules bmp engine_graphics main_graphics)
+  (modules bmp api_graphics main_graphics)
   (libraries unix graphics boulderdash)
 )

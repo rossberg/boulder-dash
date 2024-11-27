@@ -1,4 +1,4 @@
-(* Unified Backend Engine Signature *)
+(* Unified Backend API Signature *)
 
 module type S =
 sig

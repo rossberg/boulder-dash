@@ -2,6 +2,6 @@
   (optional)
   (public_name boulderdash_raylib)
   (name main_raylib)
-  (modules engine_raylib main_raylib)
+  (modules api_raylib main_raylib)
   (libraries unix raylib boulderdash)
 )

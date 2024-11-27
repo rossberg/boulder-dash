@@ -1,4 +1,4 @@
-(* Backend for Graphics Library *)
+(* Backend API for Graphics Library *)
 
 type window = unit
 

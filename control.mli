@@ -1,6 +1,6 @@
 (* Input Handling *)
 
-module Make (_ : Engine.S) :
+module Make (_ : Api.S) :
 sig
   (** Recognised user inputs. *)
   type input =

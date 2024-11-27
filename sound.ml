@@ -1,6 +1,6 @@
 (* Sound Effects *)
 
-module Make (Engine : Engine.S) =
+module Make (Api : Api.S) =
 struct
 
   type sound =
@@ -13,12 +13,12 @@ struct
 
   (* Initialisation *)
 
-  let audio = Engine.open_audio ()
-  let _ = at_exit (fun () -> Engine.close_audio audio)
+  let audio = Api.open_audio ()
+  let _ = at_exit (fun () -> Api.close_audio audio)
 
   let load name =
     let (/) = Filename.concat in
-    Engine.load_sound (Filename.dirname Sys.argv.(0) / "assets" / name ^ ".wav")
+    Api.load_sound (Filename.dirname Sys.argv.(0) / "assets" / name ^ ".wav")
 
   let music = load "music"
   let reveal = load "reveal"
@@ -72,10 +72,10 @@ struct
 
   let play s =
     let sound = sound s in
-    Engine.stop_sound audio (pred s);
-    if not (is_ambient s && Engine.is_playing_sound audio sound) then
-      Engine.play_sound audio sound
+    Api.stop_sound audio (pred s);
+    if not (is_ambient s && Api.is_playing_sound audio sound) then
+      Api.play_sound audio sound
 
-  let stop s = Engine.stop_sound audio (sound s)
+  let stop s = Api.stop_sound audio (sound s)
 
 end

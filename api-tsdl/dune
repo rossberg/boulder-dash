@@ -2,6 +2,6 @@
   (optional)
   (public_name boulderdash_tsdl)
   (name main_tsdl)
-  (modules engine_tsdl main_tsdl)
+  (modules api_tsdl main_tsdl)
   (libraries unix tsdl boulderdash)
 )
