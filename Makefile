@@ -15,12 +15,15 @@ graphics tsdl raylib: %:
 	ln -f _build/default/api-$@/main_$@.exe $(NAME).exe
 
 
-zip-%: %
-	zip -r $(NAME).zip $(NAME).exe assets
+zip%:
+	mkdir $(NAME)
+	cp -r $(NAME).exe *.dll assets $(NAME)
+	zip -r $(NAME)${@:zip%=%}.zip $(NAME)
+	rm -rf $(NAME)
 
 
 clean:
 	dune clean
 
 distclean: clean
-	rm -f *.exe
+	rm -f *.exe *.zip
