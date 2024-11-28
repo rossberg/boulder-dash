@@ -68,6 +68,7 @@ let command game (cave : Cave.cave) input : bool =
     | '/' -> raise (Advance (+Levels.count/2))
     | '[' -> Render.rescale (-1)
     | ']' -> Render.rescale (+1)
+    | 'B' -> Render.redecorate ()
     | 'F' -> Render.fullscreen ()
     | '\x1b' -> exit 0
     | _ -> ()

@@ -20,6 +20,7 @@ let letter_w = sprite_size  (* size of letter sprite *)
 let letter_h = sprite_size/2
 
 let scale = ref 4
+let decoration = ref 0
 let old_scale = ref (-1)  (* swapped when toggling fullscreen *)
 let width = ref 1  (* in tiles *)
 let height = ref 1
@@ -85,15 +86,23 @@ let fullscreen () =
 
 (* Initialise Tiles *)
 
-let bmp =
+let bmps =
   let (/) = Filename.concat in
-  Api.load_image (Filename.dirname Sys.argv.(0) / "assets" / "sprites.bmp")
+  let path = Filename.dirname Sys.argv.(0) / "assets" in
+  let bmps = ref [] in
+  for i = 0 to 9 do
+    let file = "sprites" ^ string_of_int i ^ ".bmp" in
+    if Sys.file_exists (path / file) then
+      bmps := Api.load_image (path / file) :: !bmps
+  done;
+  Array.of_list (List.rev !bmps)
+
 
 type tile = {raw : Api.raw_image; mutable prepared : Api.prepared_image}
 
 let all_tiles = ref []
 
-let tile y x =
+let tile bmp y x =
   let sz = sprite_size in
   let raw = Api.extract_image bmp (sz * x) (sz * y) sz sz in
   let prepared = Api.prepare_image win !scale raw in
@@ -101,18 +110,24 @@ let tile y x =
   all_tiles := tile :: !all_tiles;
   tile
 
-let animation y x n hold = Array.init (n * hold) (fun i -> tile y (x + i/hold))
+let animation y x n hold =
+  Array.init (n * hold) (fun i -> Array.map (fun bmp -> tile bmp y (x + i/hold)) bmps)
 
-let character y x =
+let character bmp y x =
   Api.extract_image bmp (letter_w * x) (letter_h * y) letter_w letter_h
 
-let alphabet = Array.init 256 (fun i ->
-  if i < 32 || i >= 96 then character 0 0 else character (i/8 - 4) (i mod 8))
+let alphabet =
+  Array.init 256 (fun i -> Array.map (fun bmp ->
+     if i < 32 || i >= 96 then character bmp 0 0 else
+       character bmp (i/8 - 4) (i mod 8)) bmps)
 
-let alphabet' = Array.map (fun img -> Api.recolor_image img white yellow) alphabet
+let alphabet' =
+  Array.map (Array.map (fun img -> Api.recolor_image img white yellow)) alphabet
 
-let alphabet_white = Array.map (Api.prepare_image win !scale) alphabet
-let alphabet_yellow = Array.map (Api.prepare_image win !scale) alphabet'
+let alphabet_white =
+  Array.map (Array.map (Api.prepare_image win !scale)) alphabet
+let alphabet_yellow =
+  Array.map (Array.map (Api.prepare_image win !scale)) alphabet'
 
 let space = animation 4 0 1 1
 let dirt = animation 4 1 1 1
@@ -139,7 +154,11 @@ let rockford_right = animation 16 0 8 1
 let flickers = Array.init 8 (fun i -> animation 17 i 1 1)
 
 
-(* Color Changes *)
+(* Set and Color Changes *)
+
+let redecorate () =
+  decoration := (!decoration + 1) mod Array.length bmps;
+  dirty := true
 
 let tmp_color = Api.create_color 0xff 0x00 0xd0  (* screaming pink *)
 
@@ -206,7 +225,7 @@ let draw tile x y =
   let y' = y * size - !view_y in
   if -size < x' && x' < !view_w
   && -size < y' && y' < !view_h then
-    Api.draw_image win tile.prepared x' (y' + info_h ()) !scale
+    Api.draw_image win tile.(!decoration).prepared x' (y' + info_h ()) !scale
 
 let start () =
   let new_w = Api.width_window win in
@@ -255,7 +274,7 @@ let print alphabet (x, y) s =
   let char_h = char_h () in
   let offset = max 0 ((Api.width_window win - info_w ())/2) in
   for i = 0 to String.length s - 1 do
-    Api.draw_image win alphabet.(Char.code s.[i])
+    Api.draw_image win alphabet.(Char.code s.[i]).(!decoration)
       (offset + (x + i) * char_w) (y * char_h) !scale
   done
 

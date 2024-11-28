@@ -16,6 +16,9 @@ sig
    (** [reset (w, h) fpt] resets the window state to a new cave size and refresh
       rate [fpt], denoting how many animation frames fit into one game turn. *)
 
+   val redecorate : unit -> unit
+   (** Switch to next graphics set. *)
+
    val recolor : color * color * color -> unit
    (** Set the variable colors of the graphics set. *)
 
