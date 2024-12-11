@@ -24,7 +24,7 @@ type game =
 
 exception Advance of int
 
-let make () = {level = 0; difficulty = 1; lives = 3; score = 0; paused = false}
+let game () = {level = 0; difficulty = 1; lives = 3; score = 0; paused = false}
 
 
 (* Extra life *)
@@ -246,7 +246,7 @@ let rec play () =
   play' ()
 
 and play' () =
-  let game = make () in
+  let game = game () in
   while game.lives > 0 && game.difficulty <= 5 do
     let cave, colors = Levels.level game.level game.difficulty in
     Render.recolor colors;
