@@ -1,5 +1,7 @@
 # OCaml Boulder Dash
 
+![](/doc/screenshot.png)
+
 [Boulder Dash](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) was my favourite computer game in the 8-bit era, first released on the Atari 400/800 in 1984. Though I never owned an 8-bit machine myself, I had friends that I annoyed enough to let me play it on theirs.
 
 This is a homage to its 40th anniversary in form of a fairly faithful and feature-complete clone of the original game and its first successor, implemented in just a few lines of OCaml.
