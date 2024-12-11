@@ -47,8 +47,8 @@ let clear_window () color =
   Raylib.end_drawing ()
 
 let fullscreen_window () =
-  Raylib.toggle_fullscreen ();
-  if Raylib.is_window_fullscreen () then
+  Raylib.toggle_borderless_windowed ();
+  if Raylib.is_borderless_windowed () then
     Raylib.hide_cursor ()
   else
     Raylib.show_cursor ()
