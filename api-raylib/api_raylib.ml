@@ -1,5 +1,13 @@
 (* Backend for Raylib Library *)
 
+
+(* Exceptions *)
+
+let handler _ = ()
+
+
+(* Output Window *)
+
 type window = unit
 
 let open_window w h title =

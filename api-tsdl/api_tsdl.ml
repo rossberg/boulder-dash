@@ -3,6 +3,11 @@
 open Tsdl
 
 
+(* Exceptions *)
+
+let handler _ = ()
+
+
 (* Result monad *)
 
 let ( let* ) = Result.bind

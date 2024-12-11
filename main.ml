@@ -8,7 +8,8 @@ struct
       let module Game = Game.Make (Api) in
       Game.play ()
     with exn ->
+      Api.handler exn;
       prerr_endline ("internal error: " ^ Printexc.to_string exn);
       Printexc.print_backtrace stderr;
-      Stdlib.exit 2
+      exit 2
 end
