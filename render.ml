@@ -50,7 +50,7 @@ let _ = Arg.parse
   ; "-help", Arg.Unit ignore, "" ]
   ignore ""
 
-let win = Api.open_window (!scale * 320) (!scale * 200) "Boulder Dash"
+let win = Api.open_window (!scale * 320) (!scale * 200) "Boulder Dash 2.0.3"
 let _ = at_exit (fun () -> Api.close_window win)
 
 let clear () =
@@ -76,10 +76,7 @@ let fullscreen () =
   let old_h = Api.height_window win in
   Api.fullscreen_window win;
   let new_h = Api.height_window win in
-  let new_scale =
-    if !old_scale <> -1 then !old_scale else
-    !scale * new_h / old_h  (* adjust for resolution change *)
-  in
+  let new_scale = !scale * new_h / old_h in  (* adjust for resolution change *)
   old_scale := !scale;
   rescale (new_scale - !scale)
 

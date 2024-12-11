@@ -3,6 +3,12 @@
 module type S =
 sig
 
+  (* Exception handling *)
+
+  val handler : exn -> unit
+  (** Invoked for uncaught exceptions; ignore when not yours. *)
+
+
   (* Output Window *)
 
   type window

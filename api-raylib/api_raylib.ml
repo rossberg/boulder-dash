@@ -1,5 +1,13 @@
 (* Backend for Raylib Library *)
 
+
+(* Exceptions *)
+
+let handler _ = ()
+
+
+(* Output Window *)
+
 type window = unit
 
 let open_window w h title =
@@ -38,7 +46,12 @@ let clear_window () color =
   Raylib.clear_background color;
   Raylib.end_drawing ()
 
-let fullscreen_window = Raylib.toggle_fullscreen
+let fullscreen_window () =
+  Raylib.toggle_fullscreen ();
+  if Raylib.is_window_fullscreen () then
+    Raylib.hide_cursor ()
+  else
+    Raylib.show_cursor ()
 
 
 (* Animation Frames *)
@@ -100,13 +113,13 @@ let is_playing_sound () = Raylib.is_sound_playing
 
 (* Controls *)
 
-type control = int option
+type control = int
 
 let open_control db =
   Raylib.(set_exit_key Key.Null);
   ignore (Raylib.set_gamepad_mappings db);
   Raylib.end_drawing ();  (* pump event loop to discover devices *)
-  if Raylib.is_gamepad_available 0 then Some 0 else None
+  0  (* always assume gamepad 0 *)
 
 let close_control _control = ()
 
@@ -140,20 +153,17 @@ let poll_key _ =
   !key, shift
 
 
-let poll_pad = function
-  | None ->
-    false, false, false, false, 0.0, 0.0, 0.0, 0.0, false, false, false, false
-  | Some pad ->
-    let open Raylib.GamepadButton in
-    Raylib.is_gamepad_button_down pad Left_face_left,
-    Raylib.is_gamepad_button_down pad Left_face_right,
-    Raylib.is_gamepad_button_down pad Left_face_up,
-    Raylib.is_gamepad_button_down pad Left_face_down,
-    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_x,
-    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_y,
-    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_x,
-    Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_y,
-    Raylib.is_gamepad_button_down pad Right_face_down,
-    Raylib.is_gamepad_button_down pad Right_face_right,
-    Raylib.is_gamepad_button_down pad Right_face_left,
-    Raylib.is_gamepad_button_down pad Right_face_up
+let poll_pad pad =
+  let open Raylib.GamepadButton in
+  Raylib.is_gamepad_button_down pad Left_face_left,
+  Raylib.is_gamepad_button_down pad Left_face_right,
+  Raylib.is_gamepad_button_down pad Left_face_up,
+  Raylib.is_gamepad_button_down pad Left_face_down,
+  Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_x,
+  Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Left_y,
+  Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_x,
+  Raylib.get_gamepad_axis_movement pad Raylib.GamepadAxis.Right_y,
+  Raylib.is_gamepad_button_down pad Right_face_down,
+  Raylib.is_gamepad_button_down pad Right_face_right,
+  Raylib.is_gamepad_button_down pad Right_face_left,
+  Raylib.is_gamepad_button_down pad Right_face_up

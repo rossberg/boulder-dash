@@ -7,6 +7,9 @@ sig
     | Move of Cave.direction option * bool
     | Command of char
 
-  val poll : unit -> input option
-  (** Poll for user input. *)
+  val poll : unit -> unit
+  (** Poll for user input; invoke frequently to avoid missing inputs. *)
+
+  val get : unit -> input option
+  (** Get user input since last time. *)
 end

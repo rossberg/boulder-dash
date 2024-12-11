@@ -1,5 +1,16 @@
 (* Backend API for Graphics Library *)
 
+
+(* Exceptions *)
+
+(* Swallow failures, they are unavoidable when the user closes the window. *)
+let handler = function
+  | Graphics.Graphic_failure _ -> exit 0
+  | _ -> ()
+
+
+(* Output Window *)
+
 type window = unit
 
 let open_window w h title =

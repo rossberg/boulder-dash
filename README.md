@@ -198,7 +198,7 @@ Raylib is meant to be easy to use, so has more high-level functionality and is g
 
 * Stephen Hewitt for a [Boulder Dash Disassembly](http://www.retrointernals.org/boulder-dash/boulder-dash-disassembly).
 
-* Dr Honz for the [Boulder Dashes ReM](csdb.dk/release/?id=145094), the complete reverse engineered source code of BD1, BD2, and BDCK.
+* Dr Honz for the [Boulder Dashes ReM](https://csdb.dk/release/?id=145094), the complete reverse engineered source code of BD1, BD2, and BDCK.
 
 * Czirkos Zoltan for the [GDash](https://github.com/meonwax/gdash) clone, from which I took the original's sound samples.
 
