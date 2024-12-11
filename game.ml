@@ -76,7 +76,7 @@ let command game (cave : Cave.cave) input : bool =
 
 (* Make a game turn *)
 let turn game (cave : Cave.cave) =
-  if command game cave (Control.poll ()) || not game.paused then
+  if command game cave (Control.get ()) || not game.paused then
     List.map (fun ev -> Sound.Effect ev) (Physics.step cave)
   else []
 
@@ -92,7 +92,7 @@ let reveal game cave n revealed =
     ) revealed;
     decr n
   done;
-  ignore (command game cave (Control.poll ()));
+  ignore (command game cave (Control.get ()));
   [Sound.Reveal]
 
 
@@ -167,6 +167,9 @@ let play_cave game cave =
     let old_diamonds = cave.diamonds in
     let old_time = int_of_float cave.time in
 
+    (* Check for input events *)
+    Control.poll ();
+
     (* Check if it's time for advancing a turn *)
     turn_lag := !turn_lag +. lag;
     if !turn_lag >= turn_time then
@@ -213,7 +216,7 @@ let play_cave game cave =
     if cave.amoeba.size = 0 then Sound.(stop (Effect Physics.AmoebaActivity));
 
     let pause = min (turn_time -. !turn_lag) (frame_time -. !frame_lag) in
-    Unix.sleepf (max 0.001 pause)
+    Unix.sleepf (max 0.001 (min pause (if Api.is_buffered_key then pause else 0.001)))
   done
 
 
@@ -228,7 +231,8 @@ let splash color text =
   let wait = ref true in
   while !wait do
     Sound.(play Music);
-    match Control.poll () with
+    Control.poll ();
+    match Control.get () with
     | Some (Command '\x1b') -> exit 0
     | Some (Command _) -> wait := false
     | _ -> Unix.sleepf 0.01

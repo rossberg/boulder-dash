@@ -18,6 +18,14 @@ struct
     | Move of Cave.direction option * bool
     | Command of char
 
+  let idle_key = None, false
+  let idle_pad =
+    false, false, false, false, 0.0, 0.0, 0.0, 0.0, false, false, false, false
+
+  let last_key = ref idle_key
+  let last_pad = ref idle_pad
+  let prev_key = ref idle_key
+  let prev_pad = ref idle_pad
   let prev_key_cmd = ref None
   let prev_pad_cmd = ref None
 
@@ -25,7 +33,17 @@ struct
   let axis v = if v < -0.9 then -1 else if v > +0.9 then +1 else 0
 
   let poll () =
-    let key_opt, shift = Api.poll_key control in
+    let key = if Api.is_buffered_key then idle_key else Api.poll_key control in
+    let pad = Api.poll_pad control in
+    (* Remember last activity when released, except when we already got it. *)
+    if key <> idle_key || !last_key = !prev_key then last_key := key;
+    if pad <> idle_pad || !last_pad = !prev_pad then last_pad := pad
+
+  let get () =
+    if Api.is_buffered_key then last_key := Api.poll_key control;
+    prev_key := !last_key; last_key := idle_key;
+    prev_pad := !last_pad; last_pad := idle_pad;
+    let key_opt, shift = !prev_key in
     let prev_cmd = !prev_key_cmd in
     prev_key_cmd := key_opt;
     match key_opt with
@@ -42,7 +60,7 @@ struct
       | _ -> None
       )
     | None ->
-      let l, r, u, d, x1, y1, x2, y2, a, b, x, y = Api.poll_pad control in
+      let l, r, u, d, x1, y1, x2, y2, a, b, x, y = !prev_pad in
       let dx = compare (dpad l r + axis x1 + axis x2) 0 in
       let dy = compare (dpad u d + axis y1 + axis y2) 0 in
       match dx, dy with
