@@ -4,4 +4,10 @@
   (name main_raylib)
   (modules api_raylib main_raylib)
   (libraries unix raylib boulderdash)
+  (link_flags (:include link_flags.sexp))
+)
+
+(rule
+  (targets link_flags.sexp)
+  (action (run ./config/config.exe))
 )
