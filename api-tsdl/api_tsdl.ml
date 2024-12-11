@@ -225,22 +225,31 @@ let is_buffered_key = false
 
 let arrow_keys = Sdl.K.[left, Left; right, Right; up, Up; down, Down]
 
+let time = ref 0
+let times = Array.make Sdl.Scancode.num_scancodes 0
+
 let poll_key _control =
+  incr time;
   let event = Sdl.Event.create () in
   while Sdl.poll_event (Some event) do () done;
   let state = Sdl.get_keyboard_state () in
+  let latest = ref 0 in
+  Array.mapi_inplace (fun i t ->
+    if state.{i} = 0 then 0 else
+    (
+      let t' = if t = 0 then !time else min t !time in
+      if t' > times.(!latest) then latest := i; t'
+    )
+  ) times;
+  let keycode = Sdl.get_key_from_scancode !latest in
+  let key =
+    if keycode < 0x80 then
+      Some (Char Char.(uppercase_ascii (chr keycode)))
+    else
+      Option.map (fun dir -> Arrow dir) (List.assoc_opt keycode arrow_keys)
+  in
   let shift = Sdl.Scancode.(state.{lshift} = 1 || state.{rshift} = 1) in
-  let key = ref None in
-  for scancode = 0 to Bigarray.Array1.dim state - 1 do
-    if !key  = None && state.{scancode} = 1 then
-      let keycode = Sdl.get_key_from_scancode scancode in
-      if keycode < 0x80 then
-        key := Some (Char Char.(uppercase_ascii (chr keycode)))
-      else
-        key := Option.map (fun dir -> Arrow dir)
-          (List.assoc_opt keycode arrow_keys)
-  done;
-  !key, shift
+  key, shift
 
 
 let poll_cross pad button1 button2 =

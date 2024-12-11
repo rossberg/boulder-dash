@@ -129,28 +129,35 @@ type key = Char of char | Arrow of dir
 
 let is_buffered_key = false
 
+let key_of_int i = try Raylib.Key.of_int i with _ -> Raylib.Key.Null
+
 let arrow_keys =
   Raylib.[Key.Left, Left; Key.Right, Right; Key.Up, Up; Key.Down, Down]
-let ctrl_keys =  (* for some reason, Raylib remaps these keycodes *)
-  Raylib.Key.[Escape, '\x1b'; Enter, '\r'; Tab, '\t'; Backspace, '\b']
+let char_keys =
+  Raylib.Key.[Escape, '\x1b'; Enter, '\r'; Tab, '\t'; Backspace, '\b'] @
+  List.init (127 - 32) (fun c -> key_of_int (c + 32), Char.chr (c + 32))
+
+let time = ref 0
+let times = Array.make 300 0
+
+let update_key mappings latest f =
+  List.iter (fun (code, x) ->
+    let i = Raylib.Key.to_int code in
+    if not (Raylib.is_key_down code) then times.(i) <- 0 else
+    (
+      if times.(i) = 0 then times.(i) <- !time;
+      if times.(i) > fst !latest then latest := times.(i), Some (f x)
+    )
+  ) mappings
 
 let poll_key _ =
   if Raylib.window_should_close () then exit 0;
   Raylib.poll_input_events ();
-  let shift =
-    Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift) in
-  let key = ref (Option.map (fun (_, dir) -> Arrow dir)
-      (List.find_opt (fun (code, _) -> Raylib.is_key_down code) arrow_keys)) in
-  if !key = None then
-    key := Option.map (fun (_, c) -> Char c)
-      (List.find_opt (fun (code, _) -> Raylib.is_key_down code) ctrl_keys);
-  for code = 32 to 127 do
-    try
-      if !key = None && Raylib.is_key_down (Raylib.Key.of_int code) then
-        key := Some (Char (Char.chr code))
-    with Failure _ -> ()  (* ignore invalid key codes *)
-  done;
-  !key, shift
+  incr time;
+  let latest = ref (0, None) in
+  update_key arrow_keys latest (fun dir -> Arrow dir);
+  update_key char_keys latest (fun c -> Char c);
+  snd !latest, Raylib.(is_key_down Key.Left_shift || is_key_down Key.Right_shift)
 
 
 let poll_pad pad =
