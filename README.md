@@ -1,5 +1,7 @@
 # OCaml Boulder Dash
 
+![](/doc/screenshot.png)
+
 [Boulder Dash](https://en.wikipedia.org/wiki/Boulder_Dash_(video_game)) was my favourite computer game in the 8-bit era, first released on the Atari 400/800 in 1984. Though I never owned an 8-bit machine myself, I had friends that I annoyed enough to let me play it on theirs.
 
 This is a homage to its 40th anniversary in form of a fairly faithful and feature-complete clone of the original game and its first successor, implemented in just a few lines of OCaml.
@@ -34,14 +36,21 @@ If you have previously looked at this, version 2 added the following niceties:
 * Fix behaviour of expired magic wall
 * All Boulder Dash 2 levels
 
+Further changes:
+
+* 2.0.1: Internal renaming of Engine to Api
+* 2.0.2: A couple of fixes to SDL backend; less sensitive gamepad
+* 2.0.3: Snappier keyboard controls; hide mouse in fullscreen; avoid uncaught Graphics exceptions; build .app on Mac
+* 2.0.4: Further key control refinements; suppress console window on Windows; directory reorg
+
 
 ### Building
 
 There are 3 possible backends, resulting in 3 ways to build the program. Provided you have the necessary dependencies installed, either of the following should work:
 ```
-dune build api-graphics/main_graphics.exe
-dune build api-tsdl/main_tsdl.exe
-dune build api-raylib/main_raylib.exe
+dune build src/api-graphics/main_graphics.exe
+dune build src/api-tsdl/main_tsdl.exe
+dune build src/api-raylib/main_raylib.exe
 ```
 If you are old-school and lazy like me, you can also simply say one of
 ```
@@ -63,8 +72,7 @@ Prerequisites:
 
 - or the Raylib library (`opam install raylib`).
 
-If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed you, can build and run this version with `nix run github:rossberg/boulder-dash?dir=nix`
-
+If you have [Nix](https://github.com/DeterminateSystems/nix-installer) installed, you can build and run this version with `nix run github:rossberg/boulder-dash?dir=platform/nix`
 
 
 ### Controls

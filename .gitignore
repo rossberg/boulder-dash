@@ -2,3 +2,5 @@ _build
 *.exe
 *.zip
 *.dll
+*.app
+.DS_Store

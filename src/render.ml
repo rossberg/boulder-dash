@@ -15,6 +15,7 @@ let color1 = brown
 let color2 = grey
 let color3 = white
 
+let title = "OCaml Boulder Dash 2.0.4 by Andreas Rossberg"
 let sprite_size = 16  (* size of sprite in graphics file *)
 let letter_w = sprite_size  (* size of letter sprite *)
 let letter_h = sprite_size/2
@@ -50,8 +51,7 @@ let _ = Arg.parse
   ; "-help", Arg.Unit ignore, "" ]
   ignore ""
 
-let win = Api.open_window (!scale * 320) (!scale * 200)
-  "OCaml Boulder Dash 2.0.4 by Andreas Rossberg"
+let win = Api.open_window (!scale * 320) (!scale * 200) title
 let _ = at_exit (fun () -> Api.close_window win)
 
 let clear () =
