@@ -13,7 +13,7 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
 
-        packages.default = pkgs.ocamlPackages.buildDunePackage {
+        packages.graphics = pkgs.ocamlPackages.buildDunePackage {
           pname = "boulder_dash";
           version = "2.0.4";
           src = ../../.;
@@ -25,7 +25,7 @@
           '';
         };
 
-        packages.tsdl = pkgs.ocamlPackages.buildDunePackage {
+        packages.default = pkgs.ocamlPackages.buildDunePackage {
           pname = "boulder_dash";
           version = "2.0.4";
           src = ../../.;
