@@ -36,6 +36,13 @@ If you have previously looked at this, version 2 added the following niceties:
 * Fix behaviour of expired magic wall
 * All Boulder Dash 2 levels
 
+Further changes:
+
+* 2.0.1: Internal renaming of Engine to Api
+* 2.0.2: A couple of fixes to SDL backend; less sensitive gamepad
+* 2.0.3: Snappier keyboard controls; hide mouse in fullscreen; avoid uncaught Graphics exceptions; build .app on Mac
+* 2.0.4: Further key control refinements; suppress console window on Windows
+
 
 ### Building
 
