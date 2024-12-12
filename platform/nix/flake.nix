@@ -25,6 +25,18 @@
           '';
         };
 
+        packages.tsdl = pkgs.ocamlPackages.buildDunePackage {
+          pname = "boulder_dash";
+          version = "2.0.4";
+          src = ../../.;
+          buildInputs = [ pkgs.ocamlPackages.tsdl ];
+
+          postInstall = ''
+            mv $out/bin/boulderdash_tsdl $out/bin/boulder_dash 
+            ln -s ${../../assets} $out/bin/assets
+          '';
+        };
+
       };
       flake = {
       };
