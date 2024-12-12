@@ -48,10 +48,7 @@ let clear_window () color =
 
 let fullscreen_window () =
   Raylib.toggle_borderless_windowed ();
-  if Raylib.is_borderless_windowed () then
-    Raylib.hide_cursor ()
-  else
-    Raylib.show_cursor ()
+  Raylib.hide_cursor ()
 
 
 (* Animation Frames *)

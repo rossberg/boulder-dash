@@ -50,7 +50,8 @@ let _ = Arg.parse
   ; "-help", Arg.Unit ignore, "" ]
   ignore ""
 
-let win = Api.open_window (!scale * 320) (!scale * 200) "Boulder Dash 2.0.4"
+let win = Api.open_window (!scale * 320) (!scale * 200)
+  "OCaml Boulder Dash 2.0.4 by Andreas Rossberg"
 let _ = at_exit (fun () -> Api.close_window win)
 
 let clear () =
