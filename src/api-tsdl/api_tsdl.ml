@@ -68,11 +68,16 @@ type color = int * int * int
 
 let create_color r g b = (r, g, b)
 
-let draw_color (_, ren) (r, g, b) x y w h = get_ok @@
+let fill_color (_, ren) (r, g, b) x y w h = get_ok @@
   let* () = Sdl.set_render_draw_color ren r g b 0 in
   let r = Sdl.Rect.create ~x ~y ~w ~h in
   let* () = Sdl.render_fill_rect ren (Some r) in
   ok ()
+
+
+(* Text *)
+
+let draw_text (_, _) _ _ _ _ _ = ()  (* not implemented *)
 
 
 (* Images *)

@@ -15,7 +15,7 @@
 
         packages.graphics = pkgs.ocamlPackages.buildDunePackage {
           pname = "boulder_dash";
-          version = "2.0.4";
+          version = "2.0.5";
           src = ../../.;
           buildInputs = [ pkgs.ocamlPackages.graphics ];
 
@@ -27,7 +27,7 @@
 
         packages.default = pkgs.ocamlPackages.buildDunePackage {
           pname = "boulder_dash";
-          version = "2.0.4";
+          version = "2.0.5";
           src = ../../.;
           buildInputs = [ pkgs.ocamlPackages.tsdl ];
 

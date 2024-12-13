@@ -42,7 +42,7 @@ Further changes:
 * 2.0.2: A couple of fixes to SDL backend; less sensitive gamepad
 * 2.0.3: Snappier keyboard controls; hide mouse in fullscreen; avoid uncaught Graphics exceptions; build .app on Mac
 * 2.0.4: Further key control refinements; suppress console window on Windows; directory reorg
-* 2.0.5: fix SPACE/5; avoid "true" fullscreen on Windows to keep desktop intact; add icon to Windows exe
+* 2.0.5: fix SPACE/5; add help overlay (Raylib only); avoid "true" fullscreen on Windows to keep desktop intact; add icon to Windows exe
 
 
 ### Building
@@ -101,6 +101,7 @@ Alternatively, here you have your old-fashioned keyboard controls:
 
 Meta controls:
 
+- `H` - toggle help overlay (Raylib lib only)
 - `TAB` - skip current level (cheater!)
 - `BACKSPACE` - go back one level (really?)
 - `+`, `-` - increase/decrease difficulty
@@ -136,6 +137,7 @@ The modules are:
 - `api-*/Api_{graphics,tsdl,raylib}` - wrapper for respective backend library
 - `api-*/Main_{graphics,tsdl,raylib}` - main entry point for respective build
 - `api-graphics/Bmp` - a simple decoder for .bmp files
+- `Help` - text for help overlay
 
 Not too much surprising to say there, please look at the code for details. For what it's worth, the game logic was straightforward to hack down and worked almost on first try. By far the trickiest part was getting the scrolling logic correct for all edge cases — it mimics the original's famous follow-the-player behaviour, but with arbitrary window resizing thrown into the mix, and I wanted the two to interact smoothly.
 

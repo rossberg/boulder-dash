@@ -20,11 +20,13 @@ type game =
   mutable lives : int;
   mutable score : int;
   mutable paused : bool;
+  mutable help : bool;
 }
 
 exception Advance of int
 
-let game () = {level = 0; difficulty = 1; lives = 3; score = 0; paused = false}
+let game () =
+  {level = 0; difficulty = 1; lives = 3; score = 0; paused = false; help = false}
 
 
 (* Extra life *)
@@ -69,6 +71,7 @@ let command game (cave : Cave.cave) input : bool =
     | '[' -> Render.rescale (-1)
     | ']' -> Render.rescale (+1)
     | 'F' -> Render.fullscreen ()
+    | 'H' -> game.help <- not game.help
     | '\x1b' -> exit 0
     | _ -> ()
     ); char = 'K' || char = ' ' || char = '\r'
@@ -138,6 +141,9 @@ let render game cave frame revealed =
   let blink = game.paused && !frame mod 30 < 15 in
   Render.print Yellow (0, 1)
     (if blink then "   $$$ PAUSED $$$   " else "                    ");
+
+  (* Help overlay *)
+  if game.help then Render.help Help.text;
 
   Render.finish ()
 
