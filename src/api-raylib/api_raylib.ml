@@ -47,11 +47,20 @@ let clear_window () color =
   Raylib.end_drawing ()
 
 let fullscreen_window () =
-  Raylib.toggle_fullscreen ();
-  if Raylib.is_window_fullscreen () then
+  if Sys.win32 then
+  (
+    (* On Windows, fullscreen messes up the desktop *)
+    Raylib.toggle_borderless_windowed ();
     Raylib.hide_cursor ()
+  )
   else
-    Raylib.show_cursor ()
+  (
+    Raylib.toggle_fullscreen ();
+    if Raylib.is_window_fullscreen () then
+      Raylib.hide_cursor ()
+    else
+      Raylib.show_cursor ()
+  )
 
 
 (* Animation Frames *)
