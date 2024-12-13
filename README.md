@@ -42,6 +42,7 @@ Further changes:
 * 2.0.2: A couple of fixes to SDL backend; less sensitive gamepad
 * 2.0.3: Snappier keyboard controls; hide mouse in fullscreen; avoid uncaught Graphics exceptions; build .app on Mac
 * 2.0.4: Further key control refinements; suppress console window on Windows; directory reorg
+* 2.0.5: avoid "true" fullscreen on Windows to keep desktop intact; add icon to Windows exe
 
 
 ### Building
