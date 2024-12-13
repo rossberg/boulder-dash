@@ -50,13 +50,13 @@ let command game (cave : Cave.cave) input : bool =
   | Some (Control.Command char) ->
     (match char with
     | 'P' -> game.paused <- not game.paused
-    | 'K' | ' ' | '\r' ->
+    | 'K' when cave.rockford.presence = Present -> cave.time <- 0.0
+    | ' ' | '\r' ->
       (match cave.rockford.presence with
       | Dead ->
         game.lives <- game.lives - 1;
         raise (Advance (if cave.intermission then 1 else 0))
       | Exited when cave.time <= 0.0 -> raise (Advance 1)
-      | Present when cave.time > 0.0 -> cave.time <- 0.0
       | _ -> ()
       )
     | 'U' -> cave.time <- 999.0; game.lives <- 9; Render.flicker ()
