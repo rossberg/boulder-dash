@@ -1,6 +1,5 @@
-NAME = boulderdash
-APPNAME = BoulderDash
-VERSION = 2.0.4
+NAME = BoulderDash
+VERSION = 2.0.5
 
 default:
 	@echo "Available build targets:"
@@ -20,23 +19,23 @@ graphics tsdl raylib: %:
 
 
 mac: $(NAME).exe
-	mkdir -p $(APPNAME).app/Contents
-	cp -rf platform/mac/* assets $(NAME).exe $(APPNAME).app/Contents
+	mkdir -p $(NAME).app/Contents
+	cp -rf platform/mac/* assets $(NAME).exe $(NAME).app/Contents
 
 dir: $(NAME).exe
-	mkdir $(APPNAME)
-	cp -rf $(NAME).exe assets $(APPNAME)
+	mkdir $(NAME)
+	cp -rf $(NAME).exe assets $(NAME)
 
 zip-mac: mac
-	zip -r $(APPNAME)-$(VERSION)-mac.zip $(APPNAME).app
+	zip -r $(NAME)-$(VERSION)-mac.zip $(NAME).app
 
 zip-win: dir
-	cp  `which libwinpthread-1.dll` $(APPNAME)
-	zip -r $(APPNAME)-$(VERSION)-win.zip $(APPNAME)
+	cp  `which libwinpthread-1.dll` platform/win/folder.jpg $(NAME)
+	zip -r $(NAME)-$(VERSION)-win.zip $(NAME)
 	rm -rf $(NAME)
 
 zip-linux: dir
-	zip -r $(APPNAME)-$(VERSION)-linux.zip $(APPNAME)
+	zip -r $(NAME)-$(VERSION)-linux.zip $(NAME)
 	rm -rf $(NAME)
 
 

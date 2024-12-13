@@ -20,11 +20,13 @@ type game =
   mutable lives : int;
   mutable score : int;
   mutable paused : bool;
+  mutable help : bool;
 }
 
 exception Advance of int
 
-let game () = {level = 0; difficulty = 1; lives = 3; score = 0; paused = false}
+let game () =
+  {level = 0; difficulty = 1; lives = 3; score = 0; paused = false; help = false}
 
 
 (* Extra life *)
@@ -50,13 +52,13 @@ let command game (cave : Cave.cave) input : bool =
   | Some (Control.Command char) ->
     (match char with
     | 'P' -> game.paused <- not game.paused
-    | 'K' | ' ' | '\r' ->
+    | 'K' when cave.rockford.presence = Present -> cave.time <- 0.0
+    | ' ' | '\r' ->
       (match cave.rockford.presence with
       | Dead ->
         game.lives <- game.lives - 1;
         raise (Advance (if cave.intermission then 1 else 0))
       | Exited when cave.time <= 0.0 -> raise (Advance 1)
-      | Present when cave.time > 0.0 -> cave.time <- 0.0
       | _ -> ()
       )
     | 'U' -> cave.time <- 999.0; game.lives <- 9; Render.flicker ()
@@ -68,8 +70,9 @@ let command game (cave : Cave.cave) input : bool =
     | '/' -> raise (Advance (+Levels.count/2))
     | '[' -> Render.rescale (-1)
     | ']' -> Render.rescale (+1)
-    | 'B' -> Render.redecorate ()
     | 'F' -> Render.fullscreen ()
+    | 'G' -> Render.redecorate ()
+    | 'H' -> game.help <- not game.help
     | '\x1b' -> exit 0
     | _ -> ()
     ); char = 'K' || char = ' ' || char = '\r'
@@ -139,6 +142,9 @@ let render game cave frame revealed =
   let blink = game.paused && !frame mod 30 < 15 in
   Render.print Yellow (0, 1)
     (if blink then "   $$$ PAUSED $$$   " else "                    ");
+
+  (* Help overlay *)
+  if game.help then Render.help Help.text;
 
   Render.finish ()
 

@@ -56,8 +56,13 @@ sig
   (** [create_color r g b] creates a color from 8-bit RGB values. *)
 
 
-  val draw_color : window -> color -> int -> int -> int -> int -> unit
-  (** [draw_rectangle win col x y w h] draws a rectangle. *)
+  val fill_color : window -> color -> int -> int -> int -> int -> unit
+  (** [fill_color win col x y w h] draws a rectangle. *)
+
+
+  (* Text *)
+
+  val draw_text : window -> color -> int -> int -> int -> string -> unit
 
 
   (* Images *)

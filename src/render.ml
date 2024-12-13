@@ -15,7 +15,6 @@ let color1 = brown
 let color2 = grey
 let color3 = white
 
-let title = "OCaml Boulder Dash 2.0.4 by Andreas Rossberg"
 let sprite_size = 16  (* size of sprite in graphics file *)
 let letter_w = sprite_size  (* size of letter sprite *)
 let letter_h = sprite_size/2
@@ -51,7 +50,7 @@ let _ = Arg.parse
   ; "-help", Arg.Unit ignore, "" ]
   ignore ""
 
-let win = Api.open_window (!scale * 320) (!scale * 200) title
+let win = Api.open_window (!scale * 320) (!scale * 200) Help.title
 let _ = at_exit (fun () -> Api.close_window win)
 
 let clear () =
@@ -255,8 +254,8 @@ let finish () =
   (
     let left = (win_w - info_w)/2 in
     let right = win_w - info_w - left in
-    Api.draw_color win black 0 0 left info_h;
-    Api.draw_color win black (left + info_w) 0 right info_h;
+    Api.fill_color win black 0 0 left info_h;
+    Api.fill_color win black (left + info_w) 0 right info_h;
   );
   Api.finish_frame win;
   dirty := !flickering = 1;
@@ -279,6 +278,23 @@ let print alphabet (x, y) s =
 let print = function
   | White -> print alphabet_white
   | Yellow -> print alphabet_yellow
+
+
+(* Help Overlay *)
+
+let help text =
+  let n = List.length (String.split_on_char '\n' text) in
+  let h = max 16 (16 * ((!scale + 3) / 4)) in
+  let x = 12 in
+  let y = Api.height_window win - x - h * n in
+  for i = x - 2 to x + 2 do  (* yeah, who cares, draw it 25 times! *)
+    for j = y - 2 to y + 2 do
+      Api.draw_text win black i j h text;
+    done
+  done;
+  let shadow = h / 16 in
+  Api.draw_text win black (x + shadow) (y + shadow) h text;
+  Api.draw_text win yellow x y h text
 
 
 (* Special effects *)
@@ -342,14 +358,14 @@ let scroll (x, y) =  (* center on tile position x, y *)
     (* Clear borders if map smaller than window (may be dirty from resizing) *)
     if !view_x < 0 || map_w - !view_x < !view_w then
     (
-      Api.draw_color win black 0 info_h (max 0 (- !view_x)) !view_h;
-      Api.draw_color win black (map_w - !view_x) info_h
+      Api.fill_color win black 0 info_h (max 0 (- !view_x)) !view_h;
+      Api.fill_color win black (map_w - !view_x) info_h
         (max 0 (!view_w - map_w + !view_x)) !view_h;
     );
     if !view_y < 0 || map_w - !view_x < !view_w then
     (
-      Api.draw_color win black 0 info_h !view_w (max 0 (- !view_y));
-      Api.draw_color win black 0 (map_h - !view_y + info_h)
+      Api.fill_color win black 0 info_h !view_w (max 0 (- !view_y));
+      Api.fill_color win black 0 (map_h - !view_y + info_h)
         !view_w (max 0 (!view_h - map_h + !view_y));
     );
   )

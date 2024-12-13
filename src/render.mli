@@ -28,6 +28,9 @@ sig
    val fullscreen : unit -> unit
    (** Toggle fullscreen mode, if available. *)
 
+   val help : string -> unit
+   (** Toggle help overlay. *)
+
    val scroll : grid_pos -> unit
    (** If the given grid position is too close to the window borders, initiates
       scrolling to a position where it is centered. Can be reinvoked to update

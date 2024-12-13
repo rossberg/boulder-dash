@@ -1,5 +1,5 @@
 (library
   (name boulderdash)
-  (modules api cave physics render sound control levels game main)
+  (modules api cave physics render sound control levels help game main)
   (libraries unix)
 )

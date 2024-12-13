@@ -13,14 +13,27 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
 
-        packages.default = pkgs.ocamlPackages.buildDunePackage {
-          pname = "boulderdash";
-          version = "2.0.4";
-          src = ../.;
+        packages.graphics = pkgs.ocamlPackages.buildDunePackage {
+          pname = "boulder_dash";
+          version = "2.0.5";
+          src = ../../.;
           buildInputs = [ pkgs.ocamlPackages.graphics ];
 
           postInstall = ''
-            ln -s ${../assets} $out/bin/assets
+            mv $out/bin/boulderdash_graphics $out/bin/boulder_dash 
+            ln -s ${../../assets} $out/bin/assets
+          '';
+        };
+
+        packages.default = pkgs.ocamlPackages.buildDunePackage {
+          pname = "boulder_dash";
+          version = "2.0.5";
+          src = ../../.;
+          buildInputs = [ pkgs.ocamlPackages.tsdl ];
+
+          postInstall = ''
+            mv $out/bin/boulderdash_tsdl $out/bin/boulder_dash 
+            ln -s ${../../assets} $out/bin/assets
           '';
         };
 

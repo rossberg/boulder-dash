@@ -47,8 +47,20 @@ let clear_window () color =
   Raylib.end_drawing ()
 
 let fullscreen_window () =
-  Raylib.toggle_borderless_windowed ();
-  Raylib.hide_cursor ()
+  if Sys.win32 then
+  (
+    (* On Windows, fullscreen messes up the desktop *)
+    Raylib.toggle_borderless_windowed ();
+    Raylib.hide_cursor ()
+  )
+  else
+  (
+    Raylib.toggle_fullscreen ();
+    if Raylib.is_window_fullscreen () then
+      Raylib.hide_cursor ()
+    else
+      Raylib.show_cursor ()
+  )
 
 
 (* Animation Frames *)
@@ -66,8 +78,21 @@ type color = Raylib.Color.t
 let create_color r g b =
   Raylib.Color.create r g b 0xff
 
-let draw_color () color x y w h =
+let fill_color () color x y w h =
   Raylib.draw_rectangle x y w h color
+
+
+(* Text *)
+
+let font = ref None
+
+let draw_text () color x y h text =
+  if !font = None then font := Some (Raylib.load_font "assets/mono.png");
+  let font = Option.get !font in
+  List.iteri (fun i line ->
+    let v = Raylib.Vector2.create (float x) (float (y + i*h)) in
+    Raylib.draw_text_ex font line v (float h) (float h /. 10.0) color
+  ) (String.split_on_char '\n' text)
 
 
 (* Images *)

@@ -61,9 +61,14 @@ type color = Graphics.color
 
 let create_color = Graphics.rgb
 
-let draw_color () color x y w h =
+let fill_color () color x y w h =
   Graphics.set_color color;
   Graphics.fill_rect x (Graphics.size_y () - y - h) w h
+
+
+(* Text *)
+
+let draw_text () _ _ _ _ _ = ()  (* not implemented *)
 
 
 (* Images *)
