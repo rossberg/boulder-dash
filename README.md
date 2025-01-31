@@ -43,6 +43,7 @@ Further changes:
 * 2.0.3: Snappier keyboard controls; hide mouse in fullscreen; avoid uncaught Graphics exceptions; build .app on Mac
 * 2.0.4: Further key control refinements; suppress console window on Windows; directory reorg
 * 2.0.5: fix SPACE/5; add help overlay (Raylib only); avoid "true" fullscreen on Windows to keep desktop intact; add icon to Windows exe
+* 2.0.6: fix timer run-down
 
 
 ### Building

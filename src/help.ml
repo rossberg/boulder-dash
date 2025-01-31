@@ -1,4 +1,4 @@
-let version = "2.0.5"
+let version = "2.0.6"
 let title = "OCaml Boulder Dash " ^ version
 
 let text =

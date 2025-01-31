@@ -201,16 +201,16 @@ let play_cave game cave =
     else if !frame_lag >= frame_time then
     (
       frame_lag := !frame_lag -. frame_time;
-      render game cave frame revealed
-    );
+      render game cave frame revealed;
 
-    (* Run down timer for score *)
-    if cave.rockford.presence = Exited then
-    (
-      let left = min (if cave.time > 100.0 then 9.0 else 1.0) cave.time in
-      cave.score <- cave.score + int_of_float left * cave.difficulty;
-      cave.time <- cave.time -. left;
-      Sound.(if cave.time > 0.0 then play else stop) Sound.TimeSave;
+      (* Run down timer for score *)
+      if cave.rockford.presence = Exited then
+      (
+        let left = min (if cave.time > 100.0 then 9.0 else 1.0) cave.time in
+        cave.score <- cave.score + int_of_float left * cave.difficulty;
+        cave.time <- cave.time -. left;
+        Sound.(if cave.time > 0.0 then play else stop) Sound.TimeSave;
+      );
     );
 
     (* Play timeout sound *)
